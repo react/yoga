@@ -16,6 +16,7 @@ runs:
       if: ${{ inputs.toolchain == 'Clang' }}
       shell: bash
       run: |
+        sudo apt-get install -y libc++-dev libc++abi-dev
         echo "CC=/usr/bin/clang" >> $GITHUB_ENV
         echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
         echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV
