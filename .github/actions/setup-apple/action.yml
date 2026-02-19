@@ -10,4 +10,4 @@ runs:
 
     - uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: 14.3.1
+        xcode-version: 26.2
