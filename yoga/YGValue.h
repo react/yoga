@@ -77,14 +77,6 @@ typedef YGValue (*YGValueDynamic)(
     YGValueDynamicID id,
     YGValueDynamicContext context);
 
-/**
- * Callback + identifier pair for internal storage.
- */
-struct YGValueDynamicData {
-  YGValueDynamic callback;
-  YGValueDynamicID id;
-};
-
 YG_EXTERN_C_END
 
 // Equality operators for comparison of YGValue in C++
