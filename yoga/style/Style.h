@@ -658,6 +658,8 @@ class YG_EXPORT Style {
       FlexDirection axis,
       float widthSize,
       YGNodeConstRef node) const {
+    // The total margin for a given axis does not depend on the direction
+    // so hardcoding LTR here to avoid piping direction to this function
     return computeInlineStartMargin(axis, Direction::LTR, widthSize, node) +
         computeInlineEndMargin(axis, Direction::LTR, widthSize, node);
   }
