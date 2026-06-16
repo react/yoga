@@ -615,9 +615,18 @@ static float computeFlexBasisForChildren(
   for (auto child : children) {
     child->processDimensions();
     if (child->style().display() == Display::None) {
-      zeroOutLayoutRecursively(child);
-      child->setHasNewLayout(true);
-      child->setDirty(false);
+      // Only mutate display: none children during layout passes. Zeroing them
+      // out during measure-only passes contributes nothing to the measurement,
+      // but sets `hasNewLayout` on nodes the parent's layout pass may never
+      // visit (e.g. when its layout is restored from cache, skipping
+      // `cloneChildrenIfNeeded()`). Such a leaked flag survives the commit and
+      // is copied into lazily-shared clones, later tripping the ownership
+      // assertion in `YogaLayoutableShadowNode::layout`.
+      if (performLayout) {
+        zeroOutLayoutRecursively(child);
+        child->setHasNewLayout(true);
+        child->setDirty(false);
+      }
       continue;
     }
     if (performLayout) {
