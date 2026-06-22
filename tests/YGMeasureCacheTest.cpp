@@ -57,6 +57,41 @@ static YGSize _measure_84_49(
   return YGSize{84.f, 49.f};
 }
 
+static YGSize _real_text_measurement_example(
+    YGNodeRef node,
+    float width,
+    YGMeasureMode widthMode,
+    float height,
+    YGMeasureMode heightMode) {
+  if (YGFloatsEqual(width, 1000.f) && widthMode == YGMeasureModeAtMost &&
+      heightMode == YGMeasureModeUndefined) {
+    return YGSize{
+        .width = 502.f,
+        .height = 20.f,
+    };
+  } else if (
+      YGFloatsEqual(width, 501) && widthMode == YGMeasureModeAtMost &&
+      heightMode == YGMeasureModeUndefined) {
+    return YGSize{
+        .width = 462.f,
+        .height = 40.f,
+    };
+  } else if (
+      YGFloatsEqual(width, 501) && widthMode == YGMeasureModeAtMost &&
+      heightMode == YGMeasureModeAtMost) {
+    return YGSize{
+        .width = 462.f,
+        .height = height,
+    };
+  } else {
+    // Unexpected measurement constraint
+    return YGSize{
+        .width = 0.f,
+        .height = 0.f,
+    };
+  }
+}
+
 TEST(YogaTest, measure_once_single_flexible_child) {
   YGNodeRef root = YGNodeNew();
   YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
@@ -175,4 +210,60 @@ TEST(
   YGNodeFreeRecursive(root);
 
   ASSERT_EQ(1, measureCount);
+}
+
+TEST(YogaTest, avoid_stale_flex_basis) {
+  const YGNodeRef scroll = YGNodeNew();
+  YGNodeStyleSetOverflow(scroll, YGOverflowScroll);
+  YGNodeStyleSetFlexGrow(scroll, 1);
+  YGNodeStyleSetFlexShrink(scroll, 1);
+  YGNodeStyleSetFlexDirection(scroll, YGFlexDirectionColumn);
+
+  const YGNodeRef scrollContainer = YGNodeNew();
+  YGNodeInsertChild(scroll, scrollContainer, 0);
+
+  const YGNodeRef outerRow = YGNodeNew();
+  YGNodeStyleSetFlexDirection(outerRow, YGFlexDirectionRow);
+  YGNodeInsertChild(scrollContainer, outerRow, 0);
+
+  const YGNodeRef flexGrow = YGNodeNew();
+  YGNodeStyleSetFlexGrow(flexGrow, 1);
+  YGNodeInsertChild(outerRow, flexGrow, 0);
+
+  const YGNodeRef flex = YGNodeNew();
+  YGNodeStyleSetFlex(flex, 1);
+  YGNodeInsertChild(flexGrow, flex, 0);
+
+  const YGNodeRef innerRow = YGNodeNew();
+  YGNodeStyleSetFlexDirection(innerRow, YGFlexDirectionRow);
+  YGNodeInsertChild(flex, innerRow, 0);
+
+  const YGNodeRef view = YGNodeNew();
+  YGNodeInsertChild(innerRow, view, 0);
+
+  const YGNodeRef leaf = YGNodeNew();
+  leaf->setMeasureFunc(_real_text_measurement_example);
+  YGNodeInsertChild(view, leaf, 0);
+
+  // First measure
+  YGNodeCalculateLayout(scroll, 1000, 1000, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(502, YGNodeLayoutGetWidth(leaf));
+  ASSERT_FLOAT_EQ(20, YGNodeLayoutGetHeight(leaf));
+
+  // Second measure
+  YGNodeCalculateLayout(scroll, 501, 1000, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(462, YGNodeLayoutGetWidth(leaf));
+  ASSERT_FLOAT_EQ(40, YGNodeLayoutGetHeight(leaf));
+
+  // Third measure
+  YGNodeCalculateLayout(scroll, 502, 1000, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(502, YGNodeLayoutGetWidth(leaf));
+  ASSERT_FLOAT_EQ(20, YGNodeLayoutGetHeight(leaf));
+
+  // Fourth measure
+  YGNodeCalculateLayout(scroll, 501, 1000, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(462, YGNodeLayoutGetWidth(leaf));
+  ASSERT_FLOAT_EQ(40, YGNodeLayoutGetHeight(leaf));
+
+  YGNodeFreeRecursive(scroll);
 }
