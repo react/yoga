@@ -129,6 +129,75 @@ TEST(YogaAutoMinSize, auto_min_floors_text_at_min_content_width) {
   EXPECT_FLOAT_EQ(10.0f, YGNodeLayoutGetWidth(row.spacer));
 }
 
+// A measure-func leaf's auto-min floor must include the leaf's own padding and
+// border on the main axis, just like the container branch and the normal
+// measure pass. Regression test: the original probe omitted them, flooring a
+// padded text at its bare longest-word width.
+TEST(YogaAutoMinSize, auto_min_includes_leaf_padding_and_border_width) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 20);
+  YGNodeStyleSetHeight(root, 50);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(text, measureWordWrappingText);
+  YGNodeStyleSetFlexBasis(text, kNaturalWidth);
+  YGNodeStyleSetFlexGrow(text, 0);
+  YGNodeStyleSetFlexShrink(text, 1);
+  YGNodeStyleSetPadding(text, YGEdgeLeft, 4);
+  YGNodeStyleSetPadding(text, YGEdgeRight, 4);
+  YGNodeStyleSetBorder(text, YGEdgeLeft, 1);
+  YGNodeStyleSetBorder(text, YGEdgeRight, 1);
+  YGNodeInsertChild(root, text, 0);
+
+  YGNodeRef spacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(spacer, 10);
+  YGNodeStyleSetFlexShrink(spacer, 0);
+  YGNodeInsertChild(root, spacer, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  // Floor = content kWordWidth(30) + padding(4+4) + border(1+1) = 40. Without
+  // the padding/border contribution the leaf would be wrongly floored at 30.
+  EXPECT_FLOAT_EQ(40.0f, YGNodeLayoutGetWidth(text));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
+// Same fix on the column (cross) axis: vertical padding must be included in the
+// height min-content.
+TEST(YogaAutoMinSize, auto_min_includes_leaf_padding_height) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionColumn);
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeStyleSetHeight(root, 20);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(text, measureWordWrappingText);
+  YGNodeStyleSetFlexBasis(text, kNaturalWidth); // tall basis forces shrink
+  YGNodeStyleSetFlexGrow(text, 0);
+  YGNodeStyleSetFlexShrink(text, 1);
+  YGNodeStyleSetPadding(text, YGEdgeTop, 4);
+  YGNodeStyleSetPadding(text, YGEdgeBottom, 4);
+  YGNodeInsertChild(root, text, 0);
+
+  YGNodeRef spacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(spacer, 10);
+  YGNodeStyleSetFlexShrink(spacer, 0);
+  YGNodeInsertChild(root, spacer, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  // Column probe height = natural kLineHeight(16) + padding(4+4) = 24.
+  EXPECT_FLOAT_EQ(24.0f, YGNodeLayoutGetHeight(text));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
 // flex-basis: 0 with intrinsic content (the under-protection case from the
 // critique). With auto-min on, an item with `flex: 1` is still floored at
 // its min-content even though basis is 0.
