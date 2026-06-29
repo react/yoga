@@ -25,6 +25,7 @@
     "typescript": "5.0.4"
   },
   "resolutions": {
-    "cliui/wrap-ansi": "7.0.0"
+    "cliui/wrap-ansi": "7.0.0",
+    "@babel/plugin-transform-modules-systemjs": "7.29.4"
   }
 }
