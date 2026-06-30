@@ -119,6 +119,8 @@ const char* YGErrataToString(const YGErrata value) {
       return "absolute-percent-against-inner-size";
     case YGErrataMinSizeUndefinedInsteadOfAuto:
       return "min-size-undefined-instead-of-auto";
+    case YGErrataFlexItemPercentMinMaxAgainstOwner:
+      return "flex-item-percent-min-max-against-owner";
     case YGErrataAll:
       return "all";
     case YGErrataClassic:

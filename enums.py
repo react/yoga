@@ -92,6 +92,10 @@ ENUMS = {
         # default on new configs to preserve pre-§4.5 Yoga shrink behavior.
         # Clear this bit to opt into the spec-correct CSS §4.5 floor.
         ("MinSizeUndefinedInsteadOfAuto", 1 << 3),
+        # Percentage min/max sizes on flex items will resolve against the
+        # owner size of the flex container instead of the flex container's
+        # own inner size
+        ("FlexItemPercentMinMaxAgainstOwner", 1 << 4),
         # Enable all incorrect behavior (preserve compatibility)
         ("All", 0x7FFFFFFF),
         # Enable all errata except for "StretchFlexBasis" (Defaults behavior

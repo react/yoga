@@ -62,6 +62,7 @@ export enum Errata {
   AbsolutePositionWithoutInsetsExcludesPadding = 2,
   AbsolutePercentAgainstInnerSize = 4,
   MinSizeUndefinedInsteadOfAuto = 8,
+  FlexItemPercentMinMaxAgainstOwner = 16,
   All = 2147483647,
   Classic = 2147483646,
 }
@@ -190,6 +191,7 @@ const constants = {
   ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING: Errata.AbsolutePositionWithoutInsetsExcludesPadding,
   ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE: Errata.AbsolutePercentAgainstInnerSize,
   ERRATA_MIN_SIZE_UNDEFINED_INSTEAD_OF_AUTO: Errata.MinSizeUndefinedInsteadOfAuto,
+  ERRATA_FLEX_ITEM_PERCENT_MIN_MAX_AGAINST_OWNER: Errata.FlexItemPercentMinMaxAgainstOwner,
   ERRATA_ALL: Errata.All,
   ERRATA_CLASSIC: Errata.Classic,
   EXPERIMENTAL_FEATURE_WEB_FLEX_BASIS: ExperimentalFeature.WebFlexBasis,
