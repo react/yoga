@@ -25,6 +25,7 @@
     "typescript": "5.0.4"
   },
   "resolutions": {
-    "cliui/wrap-ansi": "7.0.0"
+    "cliui/wrap-ansi": "7.0.0",
+    "qs": "6.15.2"
   }
 }
