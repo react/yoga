@@ -22,6 +22,15 @@ static YGSize measureTextLike(
   return YGSize{.width = measuredWidth, .height = 20.0f};
 }
 
+static YGSize measureSquare(
+    YGNodeConstRef /*node*/,
+    float /*width*/,
+    YGMeasureMode /*widthMode*/,
+    float /*height*/,
+    YGMeasureMode /*heightMode*/) {
+  return YGSize{.width = 10.0f, .height = 10.0f};
+}
+
 class YGFlexBasisFitContentTest : public testing::TestWithParam<bool> {
  protected:
   void SetUp() override {
@@ -197,6 +206,396 @@ TEST_P(YGFlexBasisFitContentTest, row_scroll_skips_width) {
   YGNodeCalculateLayout(root_, YGUndefined, YGUndefined, YGDirectionLTR);
 
   ASSERT_FLOAT_EQ(200, YGNodeLayoutGetWidth(text));
+}
+
+TEST(YogaTest, flex_basis_zero_column_wrapper_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float measuredSize = 10.0f;
+  constexpr float secondPassHeight = 20.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(cell, cellWidth);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(label));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, secondPassHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(label));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_row_wrapper_stays_content_sized) {
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+  constexpr float secondPassWidth = 100.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionRow);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, YGUndefined, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(wrapper));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(label));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, secondPassWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(wrapper));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(label));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_column_measured_child_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionColumn);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(label, 0);
+  YGNodeStyleSetFlexGrow(label, 0);
+  YGNodeStyleSetFlexShrink(label, 0);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(cell, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(label));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(label));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_row_measured_child_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(label, 0);
+  YGNodeStyleSetFlexGrow(label, 0);
+  YGNodeStyleSetFlexShrink(label, 0);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(cell, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(label));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(label));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_wrapper_is_content_sized_on_first_definite_layout) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(wrapper));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetWidth(wrapper));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_percent_wrapper_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float measuredSize = 10.0f;
+  constexpr float secondPassHeight = 20.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(cell, cellWidth);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasisPercent(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, secondPassHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_padded_wrapper_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+  constexpr float padding = 5.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionColumn);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeStyleSetPadding(wrapper, YGEdgeTop, padding);
+  YGNodeStyleSetPadding(wrapper, YGEdgeBottom, padding);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(
+      measuredSize + padding + padding, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(
+      measuredSize + padding + padding, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_wrapper_with_default_shrink_stays_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetUseWebDefaults(config, true);
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionColumn);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, nested_flex_basis_zero_wrappers_stay_content_sized) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float measuredSize = 10.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef outer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(outer, 0);
+  YGNodeStyleSetFlexGrow(outer, 0);
+  YGNodeStyleSetFlexShrink(outer, 0);
+  YGNodeInsertChild(cell, outer, 0);
+
+  YGNodeRef inner = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(inner, 0);
+  YGNodeStyleSetFlexGrow(inner, 0);
+  YGNodeStyleSetFlexShrink(inner, 0);
+  YGNodeInsertChild(outer, inner, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(inner, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(outer));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(inner));
+
+  YGNodeMarkDirty(label);
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(outer));
+  ASSERT_FLOAT_EQ(measuredSize, YGNodeLayoutGetHeight(inner));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_growing_zero_basis_wrapper_uses_zero_basis) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(cell, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef first = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(first, 0);
+  YGNodeStyleSetFlexGrow(first, 1);
+  YGNodeInsertChild(cell, first, 0);
+
+  YGNodeRef firstLabel = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(firstLabel, measureSquare);
+  YGNodeInsertChild(first, firstLabel, 0);
+
+  YGNodeRef second = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(second, 0);
+  YGNodeStyleSetFlexGrow(second, 1);
+  YGNodeInsertChild(cell, second, 1);
+
+  YGNodeRef secondLabel = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(secondLabel, measureSquare);
+  YGNodeInsertChild(second, secondLabel, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(first));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(second));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_basis_zero_child_with_explicit_size_uses_zero_basis) {
+  constexpr float cellWidth = 100.0f;
+  constexpr float cellHeight = 20.0f;
+  constexpr float childHeight = 5.0f;
+
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(
+      config, YGExperimentalFeatureFixFlexBasisFitContent, true);
+
+  YGNodeRef cell = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(cell, cellWidth);
+  YGNodeStyleSetHeight(cell, cellHeight);
+
+  YGNodeRef wrapper = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexBasis(wrapper, 0);
+  YGNodeStyleSetFlexGrow(wrapper, 0);
+  YGNodeStyleSetFlexShrink(wrapper, 0);
+  YGNodeStyleSetHeight(wrapper, childHeight);
+  YGNodeInsertChild(cell, wrapper, 0);
+
+  YGNodeRef label = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(label, measureSquare);
+  YGNodeInsertChild(wrapper, label, 0);
+
+  YGNodeCalculateLayout(cell, cellWidth, cellHeight, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetHeight(wrapper));
+
+  YGNodeFreeRecursive(cell);
+  YGConfigFree(config);
 }
 
 INSTANTIATE_TEST_SUITE_P(
