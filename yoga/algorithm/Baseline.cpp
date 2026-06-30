@@ -39,6 +39,15 @@ float calculateBaseline(const yoga::Node* node) {
     if (child->style().positionType() == PositionType::Absolute) {
       continue;
     }
+
+    // Skip children that haven't been measured yet (#1932)
+    const float childHeight =
+        child->getLayout().measuredDimension(Dimension::Height);
+    if (yoga::isUndefined(childHeight)) {
+      // Expect baselineChild not return NaN
+      continue;
+    }
+
     if (resolveChildAlignment(node, child) == Align::Baseline ||
         child->isReferenceBaseline()) {
       baselineChild = child;
