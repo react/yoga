@@ -31,7 +31,7 @@ function addSignatureToSourceCode(sourceCode: string): string {
 const argv = minimist(process.argv.slice(2));
 const specificFixture = argv.f || argv.fixture;
 const suspend = argv.s || argv.suspend;
-const headless = argv.h || argv.headless;
+const createWindow = argv.w || argv['create-window'];
 
 const gentestDir = dirname(fileURLToPath(import.meta.url));
 const yogaDir = dirname(gentestDir);
@@ -55,7 +55,9 @@ options.addArguments(
   '--window-position=0,0',
   '--hide-scrollbars',
 );
-headless && options.addArguments('--headless');
+if (!createWindow) {
+  options.addArguments('--headless');
+}
 options.setLoggingPrefs({
   browser: 'ALL',
   performance: 'ALL',
