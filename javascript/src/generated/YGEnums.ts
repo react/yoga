@@ -68,7 +68,6 @@ export enum Errata {
 
 export enum ExperimentalFeature {
   WebFlexBasis = 0,
-  FixFlexBasisFitContent = 1,
 }
 
 export enum FlexDirection {
@@ -193,7 +192,6 @@ const constants = {
   ERRATA_ALL: Errata.All,
   ERRATA_CLASSIC: Errata.Classic,
   EXPERIMENTAL_FEATURE_WEB_FLEX_BASIS: ExperimentalFeature.WebFlexBasis,
-  EXPERIMENTAL_FEATURE_FIX_FLEX_BASIS_FIT_CONTENT: ExperimentalFeature.FixFlexBasisFitContent,
   FLEX_DIRECTION_COLUMN: FlexDirection.Column,
   FLEX_DIRECTION_COLUMN_REVERSE: FlexDirection.ColumnReverse,
   FLEX_DIRECTION_ROW: FlexDirection.Row,
