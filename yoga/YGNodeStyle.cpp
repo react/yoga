@@ -657,9 +657,14 @@ void YGNodeStyleSetGridTemplateColumn(
     size_t index,
     YGGridTrackType type,
     float value) {
-  resolveRef(node)->style().setGridTemplateColumnAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridTemplateColumns().size(),
+      "Grid template column index is out of range");
+  resolvedNode->style().setGridTemplateColumnAt(
       index, gridTrackSizeFromTypeAndValue(type, value));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 void YGNodeStyleSetGridTemplateColumnMinMax(
@@ -669,12 +674,17 @@ void YGNodeStyleSetGridTemplateColumnMinMax(
     float minValue,
     YGGridTrackType maxType,
     float maxValue) {
-  resolveRef(node)->style().setGridTemplateColumnAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridTemplateColumns().size(),
+      "Grid template column index is out of range");
+  resolvedNode->style().setGridTemplateColumnAt(
       index,
       GridTrackSize::minmax(
           styleSizeLengthFromTypeAndValue(minType, minValue),
           styleSizeLengthFromTypeAndValue(maxType, maxValue)));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 // GridTemplateRows
@@ -689,9 +699,14 @@ void YGNodeStyleSetGridTemplateRow(
     size_t index,
     YGGridTrackType type,
     float value) {
-  resolveRef(node)->style().setGridTemplateRowAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridTemplateRows().size(),
+      "Grid template row index is out of range");
+  resolvedNode->style().setGridTemplateRowAt(
       index, gridTrackSizeFromTypeAndValue(type, value));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 void YGNodeStyleSetGridTemplateRowMinMax(
@@ -701,12 +716,17 @@ void YGNodeStyleSetGridTemplateRowMinMax(
     float minValue,
     YGGridTrackType maxType,
     float maxValue) {
-  resolveRef(node)->style().setGridTemplateRowAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridTemplateRows().size(),
+      "Grid template row index is out of range");
+  resolvedNode->style().setGridTemplateRowAt(
       index,
       GridTrackSize::minmax(
           styleSizeLengthFromTypeAndValue(minType, minValue),
           styleSizeLengthFromTypeAndValue(maxType, maxValue)));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 // GridAutoColumns
@@ -721,9 +741,14 @@ void YGNodeStyleSetGridAutoColumn(
     size_t index,
     YGGridTrackType type,
     float value) {
-  resolveRef(node)->style().setGridAutoColumnAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridAutoColumns().size(),
+      "Grid auto column index is out of range");
+  resolvedNode->style().setGridAutoColumnAt(
       index, gridTrackSizeFromTypeAndValue(type, value));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 void YGNodeStyleSetGridAutoColumnMinMax(
@@ -733,12 +758,17 @@ void YGNodeStyleSetGridAutoColumnMinMax(
     float minValue,
     YGGridTrackType maxType,
     float maxValue) {
-  resolveRef(node)->style().setGridAutoColumnAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridAutoColumns().size(),
+      "Grid auto column index is out of range");
+  resolvedNode->style().setGridAutoColumnAt(
       index,
       GridTrackSize::minmax(
           styleSizeLengthFromTypeAndValue(minType, minValue),
           styleSizeLengthFromTypeAndValue(maxType, maxValue)));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 // GridAutoRows
@@ -753,9 +783,14 @@ void YGNodeStyleSetGridAutoRow(
     size_t index,
     YGGridTrackType type,
     float value) {
-  resolveRef(node)->style().setGridAutoRowAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridAutoRows().size(),
+      "Grid auto row index is out of range");
+  resolvedNode->style().setGridAutoRowAt(
       index, gridTrackSizeFromTypeAndValue(type, value));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
 
 void YGNodeStyleSetGridAutoRowMinMax(
@@ -765,10 +800,15 @@ void YGNodeStyleSetGridAutoRowMinMax(
     float minValue,
     YGGridTrackType maxType,
     float maxValue) {
-  resolveRef(node)->style().setGridAutoRowAt(
+  auto resolvedNode = resolveRef(node);
+  yoga::assertFatalWithNode(
+      resolvedNode,
+      index < resolvedNode->style().gridAutoRows().size(),
+      "Grid auto row index is out of range");
+  resolvedNode->style().setGridAutoRowAt(
       index,
       GridTrackSize::minmax(
           styleSizeLengthFromTypeAndValue(minType, minValue),
           styleSizeLengthFromTypeAndValue(maxType, maxValue)));
-  resolveRef(node)->markDirtyAndPropagate();
+  resolvedNode->markDirtyAndPropagate();
 }
