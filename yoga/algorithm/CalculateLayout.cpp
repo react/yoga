@@ -734,9 +734,9 @@ static float computeMinContentMainSize(
     const Direction leafDirection = node->resolveDirection(ownerDirection);
     const float paddingAndBorder =
         node->style().computeFlexStartPaddingAndBorder(
-            requestedAxis, leafDirection, ownerWidth) +
+            requestedAxis, leafDirection, ownerWidth, node) +
         node->style().computeFlexEndPaddingAndBorder(
-            requestedAxis, leafDirection, ownerWidth);
+            requestedAxis, leafDirection, ownerWidth, node);
     return (wantRow ? size.width : size.height) + paddingAndBorder;
   }
 
@@ -762,25 +762,26 @@ static float computeMinContentMainSize(
 
     float childMain = computeMinContentMainSize(
         child, nodeMainAxis, direction, ownerWidth, ownerHeight);
-    childMain += child->style().computeMarginForAxis(nodeMainAxis, ownerWidth);
+    childMain +=
+        child->style().computeMarginForAxis(nodeMainAxis, ownerWidth, child);
 
     float childCross = computeMinContentMainSize(
         child, nodeCrossAxis, direction, ownerWidth, ownerHeight);
     childCross +=
-        child->style().computeMarginForAxis(nodeCrossAxis, ownerWidth);
+        child->style().computeMarginForAxis(nodeCrossAxis, ownerWidth, child);
 
     mainTotal += childMain;
     crossMax = std::max(crossMax, childCross);
   }
 
   mainTotal += node->style().computeFlexStartPaddingAndBorder(
-                   nodeMainAxis, direction, ownerWidth) +
+                   nodeMainAxis, direction, ownerWidth, node) +
       node->style().computeFlexEndPaddingAndBorder(
-          nodeMainAxis, direction, ownerWidth);
+          nodeMainAxis, direction, ownerWidth, node);
   crossMax += node->style().computeFlexStartPaddingAndBorder(
-                  nodeCrossAxis, direction, ownerWidth) +
+                  nodeCrossAxis, direction, ownerWidth, node) +
       node->style().computeFlexEndPaddingAndBorder(
-          nodeCrossAxis, direction, ownerWidth);
+          nodeCrossAxis, direction, ownerWidth, node);
 
   const bool nodeMainIsRow = isRow(nodeMainAxis);
   const float widthMin = nodeMainIsRow ? mainTotal : crossMax;
@@ -868,7 +869,7 @@ static FloatOptional computeAutoMinMainSize(
 
   // §4.5: cap by the max main size.
   const FloatOptional maxMain = child->style().resolvedMaxDimension(
-      direction, mainDim, ownerMainAxisSize, ownerWidth);
+      direction, mainDim, ownerMainAxisSize, ownerWidth, child);
   if (maxMain.isDefined() && floor > maxMain) {
     floor = maxMain;
   }
