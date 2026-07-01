@@ -106,13 +106,18 @@ void roundLayoutResultsToPixelGrid(
     const bool hasFractionalHeight =
         !yoga::inexactEquals(round(scaledNodeHeight), scaledNodeHeight);
 
+    // Never force-floor the trailing edge of a text node: when the scaled
+    // dimension is close to a whole number but the trailing edge falls just
+    // outside the inexactEquals tolerance while the leading edge falls inside
+    // it, flooring shrinks the node below its measured size and truncates
+    // text. Natural rounding keeps near-integer values intact.
     node->getLayout().setDimension(
         Dimension::Width,
         roundValueToPixelGrid(
             absoluteNodeRight,
             pointScaleFactor,
             (textRounding && hasFractionalWidth),
-            (textRounding && !hasFractionalWidth)) -
+            false) -
             roundValueToPixelGrid(
                 absoluteNodeLeft, pointScaleFactor, false, textRounding));
 
@@ -122,7 +127,7 @@ void roundLayoutResultsToPixelGrid(
             absoluteNodeBottom,
             pointScaleFactor,
             (textRounding && hasFractionalHeight),
-            (textRounding && !hasFractionalHeight)) -
+            false) -
             roundValueToPixelGrid(
                 absoluteNodeTop, pointScaleFactor, false, textRounding));
   }
