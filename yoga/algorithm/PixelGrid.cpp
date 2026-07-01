@@ -116,15 +116,23 @@ void roundLayoutResultsToPixelGrid(
             roundValueToPixelGrid(
                 absoluteNodeLeft, pointScaleFactor, false, textRounding));
 
-    node->getLayout().setDimension(
-        Dimension::Height,
-        roundValueToPixelGrid(
-            absoluteNodeBottom,
-            pointScaleFactor,
-            (textRounding && hasFractionalHeight),
-            (textRounding && !hasFractionalHeight)) -
-            roundValueToPixelGrid(
-                absoluteNodeTop, pointScaleFactor, false, textRounding));
+    // -- Height --
+    const float roundedBottom = roundValueToPixelGrid(
+        absoluteNodeBottom,
+        pointScaleFactor,
+        (textRounding && hasFractionalHeight),
+        (textRounding && !hasFractionalHeight));
+    const float roundedTop = roundValueToPixelGrid(
+        absoluteNodeTop, pointScaleFactor, false, textRounding);
+
+    const float roundedHeight = roundValueToPixelGrid(
+        roundedBottom - roundedTop,
+        pointScaleFactor,
+        false,  // Don't force ceil for height calculation
+        false   // Don't force floor for height calculation
+    );
+
+    node->getLayout().setDimension(Dimension::Height, roundedHeight);
   }
 
   for (yoga::Node* child : node->getChildren()) {
