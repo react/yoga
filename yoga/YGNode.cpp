@@ -143,6 +143,11 @@ void YGNodeInsertChild(
       !owner->hasMeasureFunc(),
       "Cannot add child: Nodes with measure functions cannot have children.");
 
+  yoga::assertFatalWithNode(
+      owner,
+      index <= owner->getChildCount(),
+      "Cannot insert child: index out of bounds.");
+
   owner->insertChild(child, index);
   child->setOwner(owner);
   owner->markDirtyAndPropagate();
@@ -154,6 +159,11 @@ void YGNodeSwapChild(
     const size_t index) {
   auto owner = resolveRef(ownerRef);
   auto child = resolveRef(childRef);
+
+  yoga::assertFatalWithNode(
+      owner,
+      index < owner->getChildCount(),
+      "Cannot swap child: index out of bounds.");
 
   owner->replaceChild(child, index);
   child->setOwner(owner);
