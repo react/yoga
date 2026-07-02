@@ -245,7 +245,6 @@ TEST(YogaTest, measure_not_enough_size_should_wrap) {
 
   YGNodeRef root_child0 = YGNodeNew();
   YGNodeStyleSetAlignSelf(root_child0, YGAlignFlexStart);
-  //  YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
   YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
   YGNodeInsertChild(root, root_child0, 0);
 
@@ -334,7 +333,6 @@ TEST(YogaTest, measure_flex_direction_column_and_padding) {
 
   YGNodeRef root_child0 = YGNodeNewWithConfig(config);
   YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
-  //  YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
   YGNodeInsertChild(root, root_child0, 0);
 
   YGNodeRef root_child1 = YGNodeNewWithConfig(config);
@@ -373,7 +371,6 @@ TEST(YogaTest, measure_flex_direction_row_no_padding) {
   YGNodeStyleSetHeight(root, 50);
 
   YGNodeRef root_child0 = YGNodeNewWithConfig(config);
-  //  YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
   YGNodeSetMeasureFunc(root_child0, _simulate_wrapping_text);
   YGNodeInsertChild(root, root_child0, 0);
 

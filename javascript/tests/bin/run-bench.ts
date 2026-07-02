@@ -42,7 +42,7 @@ for (const type of ['wasm']) {
 }
 
 console.log(
-  `Note: those tests are independants; there is no time relation to be expected between them`,
+  `Note: those tests are independent; there is no time relation to be expected between them`,
 );
 
 for (const [name, results] of testResults) {

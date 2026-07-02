@@ -12,7 +12,7 @@ type MeasureContext = {
   flexDirection: FlexDirection;
 };
 
-export function instrinsicSizeMeasureFunc(
+export function intrinsicSizeMeasureFunc(
   this: MeasureContext,
   width: number,
   widthMode: MeasureMode,

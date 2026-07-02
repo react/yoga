@@ -45,6 +45,48 @@ TEST(YogaTest, absolute_node_cloned_with_static_parent) {
   YGNodeFreeRecursive(clonedRoot);
 }
 
+TEST(YogaTest, absolute_node_cloned_through_nested_display_contents) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef wrapper = YGNodeNew();
+  YGNodeStyleSetPositionType(wrapper, YGPositionTypeStatic);
+  YGNodeStyleSetWidth(wrapper, 50);
+  YGNodeStyleSetHeight(wrapper, 50);
+  YGNodeInsertChild(root, wrapper, 0);
+
+  YGNodeRef static1 = YGNodeNew();
+  YGNodeStyleSetPositionType(static1, YGPositionTypeStatic);
+  YGNodeStyleSetFlexGrow(static1, 1);
+  YGNodeInsertChild(wrapper, static1, 0);
+
+  YGNodeRef contents1 = YGNodeNew();
+  YGNodeStyleSetDisplay(contents1, YGDisplayContents);
+  YGNodeInsertChild(static1, contents1, 0);
+
+  YGNodeRef contents2 = YGNodeNew();
+  YGNodeStyleSetDisplay(contents2, YGDisplayContents);
+  YGNodeInsertChild(contents1, contents2, 0);
+
+  YGNodeRef absolute = YGNodeNew();
+  YGNodeStyleSetPositionType(absolute, YGPositionTypeAbsolute);
+  YGNodeStyleSetWidthPercent(absolute, 50);
+  YGNodeStyleSetHeight(absolute, 1);
+  YGNodeInsertChild(contents2, absolute, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  YGNodeRef clonedRoot = YGNodeClone(root);
+  YGNodeStyleSetWidth(clonedRoot, 200);
+  YGNodeCalculateLayout(clonedRoot, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  recursivelyAssertProperNodeOwnership(clonedRoot);
+
+  YGNodeFreeRecursive(root);
+  YGNodeFreeRecursive(clonedRoot);
+}
+
 TEST(YogaTest, absolute_node_cloned_with_static_ancestors) {
   YGNodeRef root = YGNodeNew();
   YGNodeStyleSetWidth(root, 100);

@@ -8,7 +8,7 @@
  */
 
 import type {WebDriver} from 'selenium-webdriver';
-import type {LayoutNode} from './Types.ts';
+import type {LayoutNode} from './types.ts';
 
 /**
  * Build the layout tree by querying the DOM via a single executeScript call.

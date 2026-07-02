@@ -11,6 +11,9 @@ on:
 env:
   GTEST_COLOR: 1
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Build and Test [${{ matrix.toolchain }}][${{ matrix.mode }}]

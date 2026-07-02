@@ -35,6 +35,7 @@ type Layout = {
   bottom: number;
   width: number;
   height: number;
+  hadOverflow: boolean;
 };
 
 type Size = {
@@ -85,6 +86,7 @@ export type Node = {
   getChildCount(): number;
   getComputedBorder(edge: Edge): number;
   getComputedBottom(): number;
+  getComputedHadOverflow(): boolean;
   getComputedHeight(): number;
   getComputedLayout(): Layout;
   getComputedLeft(): number;
@@ -965,6 +967,10 @@ export default function wrapAssembly(lib: any): Yoga {
       return lib._YGNodeLayoutGetHeight(this._ptr);
     }
 
+    getComputedHadOverflow(): boolean {
+      return !!lib._YGNodeLayoutGetHadOverflow(this._ptr);
+    }
+
     getComputedLayout(): Layout {
       return {
         left: lib._YGNodeLayoutGetLeft(this._ptr),
@@ -973,6 +979,7 @@ export default function wrapAssembly(lib: any): Yoga {
         bottom: lib._YGNodeLayoutGetBottom(this._ptr),
         width: lib._YGNodeLayoutGetWidth(this._ptr),
         height: lib._YGNodeLayoutGetHeight(this._ptr),
+        hadOverflow: !!lib._YGNodeLayoutGetHadOverflow(this._ptr),
       };
     }
 

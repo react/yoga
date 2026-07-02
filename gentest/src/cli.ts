@@ -18,7 +18,7 @@ import readline from 'node:readline/promises';
 import signedsource from 'signedsource';
 import {glob} from 'glob';
 
-import type {LayoutNode} from './Types.ts';
+import type {LayoutNode} from './types.ts';
 import {createChromePool} from './ChromePool.ts';
 import buildLayoutTree from './buildLayoutTree.ts';
 import {CppEmitter} from './emitters/CppEmitter.ts';

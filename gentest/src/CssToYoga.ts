@@ -8,7 +8,7 @@
  */
 
 import type Emitter from './emitters/Emitter.ts';
-import type {ParsedStyles, ValueWithUnit} from './Types.ts';
+import type {ParsedStyles, ValueWithUnit} from './types.ts';
 
 const INVISIBLE_BORDER_STYLES = new Set(['none', 'initial']);
 

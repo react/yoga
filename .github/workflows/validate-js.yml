@@ -11,6 +11,9 @@ on:
 env:
   FORCE_COLOR: 3
 
+permissions:
+  contents: read
+
 jobs:
   benchmark:
     name: Benchmark [${{ matrix.os }}]

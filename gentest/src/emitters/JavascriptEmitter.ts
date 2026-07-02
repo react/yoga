@@ -8,7 +8,7 @@
  */
 
 import Emitter from './Emitter.ts';
-import type {ValueWithUnit} from '../Types.ts';
+import type {ValueWithUnit} from '../types.ts';
 
 function toValueJavascript(value: ValueWithUnit): string {
   switch (value.type) {
@@ -107,7 +107,7 @@ export class JavascriptEmitter extends Emitter {
   }
 
   emitPrologue(_fixtureName: string): void {
-    this.push("import { instrinsicSizeMeasureFunc } from '../tools/utils.ts'");
+    this.push("import { intrinsicSizeMeasureFunc } from '../tools/utils.ts'");
     this.push("import Yoga from 'yoga-layout';");
     this.push('import {');
     this.pushIndent();
@@ -208,7 +208,7 @@ export class JavascriptEmitter extends Emitter {
 
   setMeasureFunc(node: string, text: string, flexDirection: string): void {
     this.push(
-      `${node}.setMeasureFunc(instrinsicSizeMeasureFunc.bind({text: "${text}", flexDirection: ${this.tr(
+      `${node}.setMeasureFunc(intrinsicSizeMeasureFunc.bind({text: "${text}", flexDirection: ${this.tr(
         flexDirection,
       )}}));`,
     );

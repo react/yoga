@@ -8,7 +8,7 @@
  */
 
 import Emitter from './Emitter.ts';
-import type {ValueWithUnit} from '../Types.ts';
+import type {ValueWithUnit} from '../types.ts';
 
 function toValueJava(value: string | number): string {
   const n = value.toString().replace('px', '').replace('%', '');

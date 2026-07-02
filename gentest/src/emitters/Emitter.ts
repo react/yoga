@@ -7,7 +7,7 @@
  * @format
  */
 
-import type {ValueWithUnit, LayoutNode} from '../Types.ts';
+import type {ValueWithUnit, LayoutNode} from '../types.ts';
 import {
   parseStyleAttribute,
   applyStyles,

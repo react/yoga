@@ -23,7 +23,7 @@ Measure functions in the C/C++ APIs are represented as C function pointers and d
 ```cpp
 Widget widget{};
 
-YGNodeSetContext(node, &w);
+YGNodeSetContext(node, &widget);
 YGNodeSetMeasureFunc(node, &measureWidget);
 ```
 
