@@ -20,8 +20,8 @@
     "eslint": "^8.30.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-jest": "^27.1.7",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "2.8.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "prettier": "3.9.4",
     "typescript": "5.0.4"
   },
   "resolutions": {
