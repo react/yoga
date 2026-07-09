@@ -3351,7 +3351,7 @@ static void YGNodelayoutImpl(
               }
               case YGAlignFlexEnd: {
                 child->setLayoutPosition(
-                    currentLead + lineHeight -
+                    currentLead + lineHeight - crossDimLead -
                         child->getTrailingMargin(crossAxis, availableInnerWidth)
                             .unwrap() -
                         child->getLayout().measuredDimensions[dim[crossAxis]],
@@ -3363,7 +3363,7 @@ static void YGNodelayoutImpl(
                     child->getLayout().measuredDimensions[dim[crossAxis]];
 
                 child->setLayoutPosition(
-                    currentLead + (lineHeight - childHeight) / 2,
+                    currentLead + (lineHeight - crossDimLead - childHeight) / 2,
                     pos[crossAxis]);
                 break;
               }

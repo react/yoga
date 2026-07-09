@@ -623,6 +623,111 @@ TEST(YogaTest, align_content_spacebetween) {
   YGConfigFree(config);
 }
 
+TEST(YogaTest, align_content_spacebetween_and_align_items_flex_end_with_flex_wrap) {
+  const YGConfigRef config = YGConfigNew();
+  YGConfigSetExperimentalFeatureEnabled(config, YGExperimentalFeatureAbsolutePercentageAgainstPaddingEdge, true);
+
+  const YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetAlignContent(root, YGAlignSpaceBetween);
+  YGNodeStyleSetAlignItems(root, YGAlignFlexEnd);
+  YGNodeStyleSetFlexWrap(root, YGWrapWrap);
+  YGNodeStyleSetWidth(root, 150);
+  YGNodeStyleSetHeight(root, 100);
+
+  const YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeStyleSetHeight(root_child0, 10);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  const YGNodeRef root_child1 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child1, 50);
+  YGNodeStyleSetHeight(root_child1, 10);
+  YGNodeInsertChild(root, root_child1, 1);
+
+  const YGNodeRef root_child2 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child2, 50);
+  YGNodeStyleSetHeight(root_child2, 10);
+  YGNodeInsertChild(root, root_child2, 2);
+
+  const YGNodeRef root_child3 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child3, 50);
+  YGNodeStyleSetHeight(root_child3, 10);
+  YGNodeInsertChild(root, root_child3, 3);
+
+  const YGNodeRef root_child4 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child4, 50);
+  YGNodeStyleSetHeight(root_child4, 10);
+  YGNodeInsertChild(root, root_child4, 4);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetLeft(root));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root));
+  ASSERT_FLOAT_EQ(150, YGNodeLayoutGetWidth(root));
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetHeight(root));
+
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetLeft(root_child0));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child0));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child0));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child0));
+
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetLeft(root_child1));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child1));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child1));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child1));
+
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetLeft(root_child2));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child2));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child2));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child2));
+
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetLeft(root_child3));
+  ASSERT_FLOAT_EQ(90, YGNodeLayoutGetTop(root_child3));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child3));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child3));
+
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetLeft(root_child4));
+  ASSERT_FLOAT_EQ(90, YGNodeLayoutGetTop(root_child4));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child4));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child4));
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionRTL);
+
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetLeft(root));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root));
+  ASSERT_FLOAT_EQ(150, YGNodeLayoutGetWidth(root));
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetHeight(root));
+
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetLeft(root_child0));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child0));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child0));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child0));
+
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetLeft(root_child1));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child1));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child1));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child1));
+
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetLeft(root_child2));
+  ASSERT_FLOAT_EQ(0, YGNodeLayoutGetTop(root_child2));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child2));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child2));
+
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetLeft(root_child3));
+  ASSERT_FLOAT_EQ(90, YGNodeLayoutGetTop(root_child3));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child3));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child3));
+
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetLeft(root_child4));
+  ASSERT_FLOAT_EQ(90, YGNodeLayoutGetTop(root_child4));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child4));
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetHeight(root_child4));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
 TEST(YogaTest, align_content_spacearound) {
   const YGConfigRef config = YGConfigNew();
   YGConfigSetExperimentalFeatureEnabled(config, YGExperimentalFeatureAbsolutePercentageAgainstPaddingEdge, true);
