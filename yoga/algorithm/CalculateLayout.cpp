@@ -98,9 +98,26 @@ static void computeFlexBasisForChild(
       node->getConfig()->isExperimentalFeatureEnabled(
           ExperimentalFeature::FixFlexBasisFitContent);
 
+  const Style::SizeLength flexBasis = child->style().flexBasis();
+  const bool hasExplicitZeroFlexBasis =
+      (flexBasis.isPoints() || flexBasis.isPercent()) &&
+      yoga::inexactEquals(flexBasis.value().unwrap(), 0.0f);
+  const bool isMainAxisStyleDimDefined =
+      isMainAxisRow ? isRowStyleDimDefined : isColumnStyleDimDefined;
+  const bool shouldMeasureExplicitZeroFlexBasis =
+      fixFlexBasisFitContent && hasExplicitZeroFlexBasis &&
+      !isMainAxisStyleDimDefined &&
+      yoga::inexactEquals(child->resolveFlexGrow(), 0.0f);
+
   bool useResolvedFlexBasis =
       resolvedFlexBasis.isDefined() && yoga::isDefined(mainAxisSize);
-  if (fixFlexBasisFitContent && resolvedFlexBasis.isDefined() &&
+  if (shouldMeasureExplicitZeroFlexBasis) {
+    // An explicit zero flex-basis on an auto-sized, non-growing item should
+    // still derive its main-axis size from content instead of flipping between
+    // intrinsic and zero when the owner main size changes from indefinite to
+    // definite.
+    useResolvedFlexBasis = false;
+  } else if (fixFlexBasisFitContent && resolvedFlexBasis.isDefined() &&
       resolvedFlexBasis.unwrap() > 0) {
     useResolvedFlexBasis = true;
   }
