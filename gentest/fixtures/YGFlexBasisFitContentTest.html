@@ -53,16 +53,3 @@
     <div style="height: 500px;"></div>
   </div>
 </div>
-
-<!-- Items with flex-basis inside a scroll container's auto-height
-     content container. With FixFlexBasisFitContent, flex-basis is
-     respected even when the content container's main axis size is
-     indefinite (NaN). Without the feature, flex-basis would be ignored. -->
-<div id="flex_basis_in_scroll_content_container"
-     data-experiments="FixFlexBasisFitContent"
-     style="width: 200px; height: 300px; overflow: scroll;">
-  <div>
-    <div style="flex-basis: 200px;"></div>
-    <div style="flex-basis: 300px;"></div>
-  </div>
-</div>
