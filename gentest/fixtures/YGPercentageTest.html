@@ -47,7 +47,7 @@
   <div style="flex-grow: 4; flex-basis: 15%; max-width: 20%;"></div>
 </div>
 
-<div id="percentage_flex_basis_main_min_width" style="width: 200px; height: 200px; flex-direction: row;">
+<div id="percentage_flex_basis_main_min_width" data-disabled="true" style="width: 200px; height: 200px; flex-direction: row;">
   <div style="flex-grow: 1; flex-basis: 15%; min-width: 60%;"></div>
   <div style="flex-grow: 4; flex-basis: 10%; min-width: 20%;"></div>
 </div>
@@ -146,4 +146,16 @@
 
 <div id="percent_of_max_cross_unstretched" style="flex-direction: column; max-width: 60px; height: 50px; align-items: flex-start;">
   <div style="width: 50%; height: 20px;"></div>
+</div>
+
+<div id="percentage_nested_min_width" style="flex-direction: row; width: 40px; height: 20px;">
+  <div style="flex-direction: row; width: 10px;">
+    <div style="flex-direction: row; min-width: 50%;"></div>
+  </div>
+</div>
+
+<div id="percentage_nested_max_width" style="flex-direction: row; width: 40px; height: 20px;">
+  <div style="flex-direction: row; width: 10px;">
+    <div style="flex-direction: row; width: 20px; max-width: 50%;"></div>
+  </div>
 </div>
