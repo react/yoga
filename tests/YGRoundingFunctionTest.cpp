@@ -184,3 +184,27 @@ TEST(YogaTest, raw_layout_dimensions) {
 
   YGConfigFree(config);
 }
+
+TEST(YogaTest, roundLayoutResultsToPixelGrid_height_rounding_up) {
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetPointScaleFactor(config, 3);
+
+  YGNodeRef node = YGNodeNewWithConfig(config);
+  YGNodeStyleSetPositionType(node, YGPositionTypeAbsolute);
+
+  // These are values extracted from a debugging session in a real iOS app
+  YGNodeStyleSetPosition(node, YGEdgeLeft, 38.333333969116211);
+  YGNodeStyleSetPosition(node, YGEdgeTop, 1970.3333333432674);
+  YGNodeStyleSetWidth(node, 339.66665649414063);
+  YGNodeStyleSetHeight(node, 96);
+  YGNodeSetNodeType(node, YGNodeTypeText);
+
+  YGNodeCalculateLayout(node, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  // If this value is anything less than 96, iOS will not wrap the text to a 4th line
+  ASSERT_FLOAT_EQ(YGNodeLayoutGetHeight(node), 96.0f);
+
+  YGNodeFreeRecursive(node);
+
+  YGConfigFree(config);
+}
