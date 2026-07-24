@@ -99,6 +99,18 @@ root.insertChild(child1, 1);
 
 Yoga Nodes are not freed automatically and should be discarded when no longer needed. Individual nodes may be freed by calling `node.free()`, or an entire Yoga tree may be freed by calling `node.freeRecursive()`.
 
+Nodes live in the WebAssembly heap, which is not visible to the JavaScript garbage collector. An application which repeatedly leaks nodes will grow the heap until new nodes fail to allocate. If an exception may be thrown after nodes are created (e.g. from within a [measure function](../advanced/external-layout-systems.mdx) during layout), freeing in a `finally` block guarantees the tree is released:
+
+```ts
+const root = buildYogaTree();
+try {
+  root.calculateLayout(undefined, undefined, Direction.LTR);
+  readLayoutResults(root);
+} finally {
+  root.freeRecursive();
+}
+```
+
 A future revision of JavaScript bindings for Yoga may move to garbage collection to remove this requirement.
 
 :::
