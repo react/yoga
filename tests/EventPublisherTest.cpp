@@ -121,4 +121,42 @@ TEST_F(EventPublisherTest, publishForwardsToEverySubscriberWithNodeAndType) {
   YGNodeFree(sentinelNode);
 }
 
+TEST_F(EventPublisherTest, publishForwardsTypedEventDataPayloadUnmodified) {
+  int measureCallbackEndCount = 0;
+  YGMeasureMode capturedWidthMode = YGMeasureModeUndefined;
+  float capturedMeasuredWidth = 0.0f;
+  float capturedMeasuredHeight = 0.0f;
+  LayoutPassReason capturedReason = LayoutPassReason::kInitial;
+
+  Event::subscribe([&](YGNodeConstRef, Event::Type type, Event::Data data) {
+    if (type != Event::MeasureCallbackEnd) {
+      return;
+    }
+    const auto& payload = data.get<Event::MeasureCallbackEnd>();
+    capturedWidthMode = payload.widthMeasureMode;
+    capturedMeasuredWidth = payload.measuredWidth;
+    capturedMeasuredHeight = payload.measuredHeight;
+    capturedReason = payload.reason;
+    ++measureCallbackEndCount;
+  });
+
+  Event::publish<Event::MeasureCallbackEnd>(
+      nullptr,
+      Event::TypedData<Event::MeasureCallbackEnd>{
+          .width = 100.0f,
+          .widthMeasureMode = YGMeasureModeAtMost,
+          .height = 200.0f,
+          .heightMeasureMode = YGMeasureModeExactly,
+          .measuredWidth = 42.5f,
+          .measuredHeight = 84.25f,
+          .reason = LayoutPassReason::kFlexMeasure,
+      });
+
+  ASSERT_EQ(measureCallbackEndCount, 1);
+  EXPECT_EQ(capturedWidthMode, YGMeasureModeAtMost);
+  EXPECT_FLOAT_EQ(capturedMeasuredWidth, 42.5f);
+  EXPECT_FLOAT_EQ(capturedMeasuredHeight, 84.25f);
+  EXPECT_EQ(capturedReason, LayoutPassReason::kFlexMeasure);
+}
+
 } // namespace facebook::yoga::test
