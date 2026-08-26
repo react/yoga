@@ -12,7 +12,18 @@
 
 namespace facebook::yoga {
 
-float roundValueToPixelGrid(
+// Rounds `value` to the pixel grid and returns the result *in pixel space* (i.e. still multiplied by
+// `pointScaleFactor`), where a grid-aligned value is always an exact integer.
+//
+// Callers that need a difference of two rounded values must subtract in this space rather than convert each
+// operand back to points first: `scaledValue / pointScaleFactor` is generally not representable (for a 3x
+// screen it almost never is), and narrowing each operand to `float` before subtracting leaks that
+// representation error into the result. The error grows with the magnitude of the operands, so for a node far
+// down a long scrolling list it becomes large enough to matter — a height of exactly 288.0 points can come
+// back as 287.999755859375, which is enough for a text node to lose an entire trailing line when the platform
+// text engine checks whether the last line still fits. Subtracting two exact integers first, and narrowing
+// once at the end, keeps the returned dimension exactly grid-aligned.
+double roundValueToPixelGridScaled(
     const double value,
     const double pointScaleFactor,
     const bool forceCeil,
@@ -57,6 +68,25 @@ float roundValueToPixelGrid(
              ? 1.0
              : 0.0);
   }
+  return scaledValue;
+}
+
+float roundValueToPixelGrid(
+    const double value,
+    const double pointScaleFactor,
+    const bool forceCeil,
+    const bool forceFloor) {
+  const double scaledValue =
+      roundValueToPixelGridScaled(value, pointScaleFactor, forceCeil, forceFloor);
+  return (std::isnan(scaledValue) || std::isnan(pointScaleFactor))
+      ? YGUndefined
+      : (float)(scaledValue / pointScaleFactor);
+}
+
+// Converts a pixel-space value produced by `roundValueToPixelGridScaled()` back to points.
+static float pixelGridValueToPoints(
+    const double scaledValue,
+    const double pointScaleFactor) {
   return (std::isnan(scaledValue) || std::isnan(pointScaleFactor))
       ? YGUndefined
       : (float)(scaledValue / pointScaleFactor);
@@ -86,13 +116,15 @@ void roundLayoutResultsToPixelGrid(
     // size as this could lead to unwanted text truncation.
     const bool textRounding = node->getNodeType() == NodeType::Text;
 
-    node->setLayoutPosition(
-        roundValueToPixelGrid(nodeLeft, pointScaleFactor, false, textRounding),
-        PhysicalEdge::Left);
+    const double scaledLeft =
+        roundValueToPixelGridScaled(nodeLeft, pointScaleFactor, false, textRounding);
+    const double scaledTop =
+        roundValueToPixelGridScaled(nodeTop, pointScaleFactor, false, textRounding);
 
     node->setLayoutPosition(
-        roundValueToPixelGrid(nodeTop, pointScaleFactor, false, textRounding),
-        PhysicalEdge::Top);
+        pixelGridValueToPoints(scaledLeft, pointScaleFactor), PhysicalEdge::Left);
+    node->setLayoutPosition(
+        pixelGridValueToPoints(scaledTop, pointScaleFactor), PhysicalEdge::Top);
 
     // We multiply dimension by scale factor and if the result is close to the
     // whole number, we don't have any fraction To verify if the result is close
@@ -106,25 +138,32 @@ void roundLayoutResultsToPixelGrid(
     const bool hasFractionalHeight =
         !yoga::inexactEquals(round(scaledNodeHeight), scaledNodeHeight);
 
+    // The dimensions are derived as the difference of two rounded absolute edges. Both operands are exact
+    // integers in pixel space, so subtracting there and narrowing once yields an exactly grid-aligned
+    // dimension; converting each edge back to points first and subtracting in `float` would not.
+    const double scaledAbsoluteLeft =
+        roundValueToPixelGridScaled(absoluteNodeLeft, pointScaleFactor, false, textRounding);
+    const double scaledAbsoluteRight = roundValueToPixelGridScaled(
+        absoluteNodeRight,
+        pointScaleFactor,
+        (textRounding && hasFractionalWidth),
+        (textRounding && !hasFractionalWidth));
+
+    const double scaledAbsoluteTop =
+        roundValueToPixelGridScaled(absoluteNodeTop, pointScaleFactor, false, textRounding);
+    const double scaledAbsoluteBottom = roundValueToPixelGridScaled(
+        absoluteNodeBottom,
+        pointScaleFactor,
+        (textRounding && hasFractionalHeight),
+        (textRounding && !hasFractionalHeight));
+
     node->getLayout().setDimension(
         Dimension::Width,
-        roundValueToPixelGrid(
-            absoluteNodeRight,
-            pointScaleFactor,
-            (textRounding && hasFractionalWidth),
-            (textRounding && !hasFractionalWidth)) -
-            roundValueToPixelGrid(
-                absoluteNodeLeft, pointScaleFactor, false, textRounding));
+        pixelGridValueToPoints(scaledAbsoluteRight - scaledAbsoluteLeft, pointScaleFactor));
 
     node->getLayout().setDimension(
         Dimension::Height,
-        roundValueToPixelGrid(
-            absoluteNodeBottom,
-            pointScaleFactor,
-            (textRounding && hasFractionalHeight),
-            (textRounding && !hasFractionalHeight)) -
-            roundValueToPixelGrid(
-                absoluteNodeTop, pointScaleFactor, false, textRounding));
+        pixelGridValueToPoints(scaledAbsoluteBottom - scaledAbsoluteTop, pointScaleFactor));
   }
 
   for (yoga::Node* child : node->getChildren()) {
