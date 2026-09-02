@@ -269,6 +269,11 @@ void Node::setLayoutComputedFlexBasis(const FloatOptional computedFlexBasis) {
   layout_.computedFlexBasis = computedFlexBasis;
 }
 
+void Node::setLayoutComputedFlexBasisIsMeasured(
+    const bool computedFlexBasisIsMeasured) {
+  layout_.computedFlexBasisIsMeasured = computedFlexBasisIsMeasured;
+}
+
 void Node::setLayoutPosition(float position, PhysicalEdge edge) {
   layout_.setPosition(edge, position);
 }
@@ -454,6 +459,7 @@ void Node::markDirtyAndPropagate() {
   if (!isDirty_) {
     setDirty(true);
     setLayoutComputedFlexBasis(FloatOptional());
+    setLayoutComputedFlexBasisIsMeasured(false);
     if (owner_ != nullptr) {
       owner_->markDirtyAndPropagate();
     }

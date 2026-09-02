@@ -266,18 +266,37 @@ static void computeFlexBasisForChild(
       node->getConfig()->isExperimentalFeatureEnabled(
           ExperimentalFeature::FixFlexBasisFitContent);
 
-  const bool useResolvedFlexBasis =
+  bool useResolvedFlexBasis =
       resolvedFlexBasis.isDefined() && yoga::isDefined(mainAxisSize);
 
+  // Whether the resolved-flex-basis branch below would keep a basis stored by
+  // an earlier layout instead of writing a fresh one.
+  const bool retainsStoredFlexBasis =
+      child->getLayout().computedFlexBasis.isDefined() &&
+      !(child->getConfig()->isExperimentalFeatureEnabled(
+            ExperimentalFeature::WebFlexBasis) &&
+        child->getLayout().computedFlexBasisGeneration != generationCount);
+
+  // A flex basis measured from the child's content during an earlier layout
+  // must not be retained. The max-content pass that would have refreshed it
+  // can be skipped entirely when an ancestor's measurement cache answers for
+  // the whole subtree, leaving a value computed against a different available
+  // size. Measuring again does exactly what that skipped pass would have done
+  // (and usually hits the child's own measurement cache). A retained
+  // *resolved* basis is still valid and is left alone.
+  if (useResolvedFlexBasis && retainsStoredFlexBasis &&
+      child->getLayout().computedFlexBasisIsMeasured &&
+      child->getLayout().computedFlexBasisGeneration != generationCount) {
+    useResolvedFlexBasis = false;
+  }
+
   if (useResolvedFlexBasis) {
-    if (child->getLayout().computedFlexBasis.isUndefined() ||
-        (child->getConfig()->isExperimentalFeatureEnabled(
-             ExperimentalFeature::WebFlexBasis) &&
-         child->getLayout().computedFlexBasisGeneration != generationCount)) {
+    if (!retainsStoredFlexBasis) {
       const FloatOptional paddingAndBorder = FloatOptional(
           paddingAndBorderForAxis(child, mainAxis, direction, ownerWidth));
       child->setLayoutComputedFlexBasis(
           yoga::maxOrDefined(resolvedFlexBasis, paddingAndBorder));
+      child->setLayoutComputedFlexBasisIsMeasured(false);
     }
   } else if (isMainAxisRow && isRowStyleDimDefined) {
     // The width is definite, so use that as the flex basis.
@@ -290,6 +309,7 @@ static void computeFlexBasisForChild(
             child->getResolvedDimension(
                 direction, Dimension::Width, ownerWidth, ownerWidth),
             paddingAndBorder));
+    child->setLayoutComputedFlexBasisIsMeasured(false);
   } else if (!isMainAxisRow && isColumnStyleDimDefined) {
     // The height is definite, so use that as the flex basis.
     const FloatOptional paddingAndBorder =
@@ -300,6 +320,7 @@ static void computeFlexBasisForChild(
             child->getResolvedDimension(
                 direction, Dimension::Height, ownerHeight, ownerWidth),
             paddingAndBorder));
+    child->setLayoutComputedFlexBasisIsMeasured(false);
   } else {
     // Compute the flex basis and hypothetical main size (i.e. the clamped flex
     // basis).
@@ -454,6 +475,7 @@ static void computeFlexBasisForChild(
         yoga::maxOrDefined(
             child->getLayout().measuredDimension(dimension(mainAxis)),
             paddingAndBorderForAxis(child, mainAxis, direction, ownerWidth))));
+    child->setLayoutComputedFlexBasisIsMeasured(true);
   }
   child->setLayoutComputedFlexBasisGeneration(generationCount);
 }
@@ -801,6 +823,7 @@ static float computeFlexBasisForChildren(
     if (child == singleFlexChild) {
       child->setLayoutComputedFlexBasisGeneration(generationCount);
       child->setLayoutComputedFlexBasis(FloatOptional(0));
+      child->setLayoutComputedFlexBasisIsMeasured(false);
     } else {
       computeFlexBasisForChild(
           node,
