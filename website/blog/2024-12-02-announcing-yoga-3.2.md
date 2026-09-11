@@ -47,28 +47,29 @@ To preserve compatibility, Yoga nodes default to `box-sizing: border-box`, even 
   </Node>
 </Layout>`} />
 
-
-
 ## `display: contents`
 
 Yoga nodes [may now be set to `display: contents`](https://github.com/facebook/yoga/commit/68bb2343d2b470962065789d09016bba8e785340) to remove them from the layout flow, while preserving and hoisting the node's children. This may be used by the higher level UI framework to allow more easily composing wrapper components (such as those which may need to handle events, without influencing child layout). Thanks [@j-piasecki](https://github.com/j-piasecki) for the contribution!
 
 <Playground code={`<Layout config={{useWebDefaults: false}}>
-  <Node
-    style={{
+<Node
+style={{
       width: 100,
       height: 100,
       gap: 10,
     }}
-  >
+
+>
+
     <Node style={{display: "contents"}}>
+
       <Node style={{flexGrow: 1}} />
       <Node style={{flexGrow: 1}} />
       <Node style={{flexGrow: 1}} />
     </Node>
+
   </Node>
 </Layout>`} />
-
 
 ## Removal of legacy absolute positioning
 

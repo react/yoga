@@ -6,7 +6,7 @@ inputs:
     default: 'Clang'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Install Ninja
       if: ${{ runner.os != 'Windows' }}
