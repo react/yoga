@@ -38,25 +38,25 @@ Percentages in Yoga do not always act consistently with browsers when a definite
   </Node>
 </Layout>`} />
 
-
-
 ## Alignment changes to overflowed containers
 
 Yoga has made [several](https://github.com/facebook/yoga/commit/932361cdbf5864a2e6929b68154b4ada2ac586d9) [fixes](https://github.com/facebook/yoga/commit/6f10656868c2eca9b2eae55ad754e01e70565f69) to how flex-children of overflowed containers are aligned when using `justify-content`, `align-content`, or `margin: "auto"`. This includes some cases where adding an alignment keyword could cause items to overlap, or padding to be removed.
 
 <Playground code={`<Layout config={{useWebDefaults: false}}>
-  <Node
-    style={{
+<Node
+style={{
       width: 100,
       height: 100,
       padding: 10,
       justifyContent: 'space-evenly',
     }}
-  >
+
+>
+
     <Node style={{height: 100, width: 100}} />
+
   </Node>
 </Layout>`} />
-
 
 ## Fixes for regressions in Yoga 3.0
 

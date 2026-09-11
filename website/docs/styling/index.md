@@ -30,6 +30,7 @@ Yoga acts as if [`box-sizing: 'border-box'`](https://developer.mozilla.org/en-US
 ## Edges
 
 Margin, padding, position, and border, are set against an Edge, which may be:
+
 1. Relative to writing direction (start/end)
 2. A physical edge (top/right/left/bottom)
 3. A collection of edges (vertical/horizontal/all)

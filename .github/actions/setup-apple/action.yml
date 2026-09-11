@@ -1,7 +1,7 @@
 name: Setup Apple envirionment
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
