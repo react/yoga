@@ -1,0 +1,36 @@
+name: Validate Formatting
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup JavaScript
+        uses: ./.github/actions/setup-js
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check formatting
+        run: yarn format-check

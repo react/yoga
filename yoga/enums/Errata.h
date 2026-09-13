@@ -20,6 +20,8 @@ enum class Errata : uint32_t {
   StretchFlexBasis = YGErrataStretchFlexBasis,
   AbsolutePositionWithoutInsetsExcludesPadding = YGErrataAbsolutePositionWithoutInsetsExcludesPadding,
   AbsolutePercentAgainstInnerSize = YGErrataAbsolutePercentAgainstInnerSize,
+  MinSizeUndefinedInsteadOfAuto = YGErrataMinSizeUndefinedInsteadOfAuto,
+  FlexFirstPassUsesRunningTotals = YGErrataFlexFirstPassUsesRunningTotals,
   All = YGErrataAll,
   Classic = YGErrataClassic,
 };

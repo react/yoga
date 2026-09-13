@@ -1,7 +1,7 @@
 name: Install Ninja
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Install ninja (Linux)
       if: ${{ runner.os == 'Linux' }}

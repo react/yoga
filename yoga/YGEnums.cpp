@@ -117,6 +117,10 @@ const char* YGErrataToString(const YGErrata value) {
       return "absolute-position-without-insets-excludes-padding";
     case YGErrataAbsolutePercentAgainstInnerSize:
       return "absolute-percent-against-inner-size";
+    case YGErrataMinSizeUndefinedInsteadOfAuto:
+      return "min-size-undefined-instead-of-auto";
+    case YGErrataFlexFirstPassUsesRunningTotals:
+      return "flex-first-pass-uses-running-totals";
     case YGErrataAll:
       return "all";
     case YGErrataClassic:

@@ -549,7 +549,7 @@ class YogaNodeStylePropertiesTest {
                 style()
                     .positionType(YogaPositionType.ABSOLUTE)
                     .position(YogaEdge.TOP, 11f)
-                    .position(YogaEdge.BOTTOM, 22f)
+                    .position(YogaEdge.BOTTOM, 22f),
             )
             .node()
     node.calculateLayout(UNDEFINED, UNDEFINED)
@@ -566,7 +566,7 @@ class YogaNodeStylePropertiesTest {
                 style()
                     .positionType(YogaPositionType.ABSOLUTE)
                     .positionPercent(YogaEdge.LEFT, 11f)
-                    .positionPercent(YogaEdge.RIGHT, 22f)
+                    .positionPercent(YogaEdge.RIGHT, 22f),
             )
             .node()
     node.calculateLayout(UNDEFINED, UNDEFINED)

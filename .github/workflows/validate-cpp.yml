@@ -34,7 +34,6 @@ jobs:
       - name: Unit tests
         run: ./unit_tests ${{ matrix.mode }}
 
-
   build_fuzzers:
     name: Build fuzzers [${{ matrix.toolchain }}][${{ matrix.mode }}]
     runs-on: ubuntu-latest

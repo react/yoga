@@ -55,7 +55,11 @@ class YogaLoggerTest {
   @Throws(Exception::class)
   fun testLoggerLeak() {
     val config = YogaConfigFactory.create()
-    var logger: YogaLogger? = YogaLogger { level, message -> }
+    @Suppress("ObjectLiteralToLambda")
+    var logger: YogaLogger? =
+        object : YogaLogger {
+          override fun log(level: YogaLogLevel, message: String) {}
+        }
     config.setLogger(logger)
     config.setLogger(null)
     val ref = WeakReference<Any>(logger)
