@@ -30,8 +30,8 @@ LinePlacement resolveLinePlacement(
   const GridLine start = normalize(startLine);
   const GridLine end = normalize(endLine);
 
-  const auto resolveNegativeLineValue =
-      [](int32_t lineValue, int32_t lineCount) -> int32_t {
+  const auto resolveNegativeLineValue = [](int32_t lineValue,
+                                           int32_t lineCount) -> int32_t {
     // Negative lines count back from the last line, e.g. -1 is the last line.
     return lineValue < 0 ? lineCount + lineValue + 1 : lineValue;
   };

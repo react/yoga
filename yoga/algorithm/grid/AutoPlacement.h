@@ -38,7 +38,8 @@ struct AutoPlacement {
   static AutoPlacement performAutoPlacement(Node* node);
 };
 
-// 1. Runs the grid placement algorithm and normalizes the output into the 0-based coordinate space.
+// 1. Runs the grid placement algorithm and normalizes the output into the
+// 0-based coordinate space.
 // 2. Builds the baseline sharing groups for each row.
 struct ResolvedAutoPlacement {
   // Items with resolved 0-based positions, in child order.

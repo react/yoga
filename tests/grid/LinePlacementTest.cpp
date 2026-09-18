@@ -86,9 +86,7 @@ TEST(LinePlacement, span_start_with_integer_end) {
 TEST(LinePlacement, negative_line_counts_from_end) {
   expectPlacement(
       resolveLinePlacement(
-          GridLine::fromInteger(-1),
-          GridLine::auto_(),
-          kThreeColumnLineCount),
+          GridLine::fromInteger(-1), GridLine::auto_(), kThreeColumnLineCount),
       3,
       4,
       1);
@@ -143,16 +141,14 @@ TEST(LinePlacement, negative_span_clamps_to_one) {
 TEST(LinePlacement, line_zero_is_treated_as_auto) {
   expectPlacement(
       resolveLinePlacement(
-          GridLine::fromInteger(0),
-          GridLine::auto_(),
-          kThreeColumnLineCount),
+          GridLine::fromInteger(0), GridLine::auto_(), kThreeColumnLineCount),
       -1,
       -1,
       1);
 }
 
-// grid-column: 0 / 2 -> the invalid 0 start becomes auto, leaving a definite end
-// at line 2, so the item resolves to track [0, 1).
+// grid-column: 0 / 2 -> the invalid 0 start becomes auto, leaving a definite
+// end at line 2, so the item resolves to track [0, 1).
 TEST(LinePlacement, line_zero_start_with_definite_end) {
   expectPlacement(
       resolveLinePlacement(

@@ -13,7 +13,8 @@
 namespace facebook::yoga {
 
 // A resolved grid-line placement: a half-open [start, end) track interval plus
-// its span. Line number can be negative to denote an implicit line before the explicit grid.
+// its span. Line number can be negative to denote an implicit line before the
+// explicit grid.
 struct LinePlacement {
   int32_t start = 0;
   int32_t end = 0;
@@ -24,8 +25,9 @@ inline bool isDefiniteLine(const GridLine& line) {
   return line.type == GridLineType::Integer && line.integer != 0;
 }
 
-// Handles placement errors as defined in https://www.w3.org/TR/css-grid-1/#grid-placement-errors 
-// and returns 0 index based line positions from user added grid-columns and grid-rows.
+// Handles placement errors as defined in
+// https://www.w3.org/TR/css-grid-1/#grid-placement-errors and returns 0 index
+// based line positions from user added grid-columns and grid-rows.
 LinePlacement resolveLinePlacement(
     const GridLine& startLine,
     const GridLine& endLine,

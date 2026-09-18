@@ -96,12 +96,13 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
       const auto rowPlacement = resolveLinePlacement(
           gridItemRowStart, gridItemRowEnd, explicitRowLineCount);
 
-      recordGridArea(AutoPlacementItem{
-          .columnStart = columnPlacement.start,
-          .columnEnd = columnPlacement.end,
-          .rowStart = rowPlacement.start,
-          .rowEnd = rowPlacement.end,
-          .node = child});
+      recordGridArea(
+          AutoPlacementItem{
+              .columnStart = columnPlacement.start,
+              .columnEnd = columnPlacement.end,
+              .rowStart = rowPlacement.start,
+              .rowEnd = rowPlacement.end,
+              .node = child});
     }
   }
 
@@ -138,19 +139,19 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
           : minColumnStart;
       auto columnEnd = columnStart + columnSpan;
 
-      while (const auto* overlap =
-                 occupancy.hasOverlap(
-                     rowStart, rowEnd, columnStart, columnEnd)) {
+      while (const auto* overlap = occupancy.hasOverlap(
+                 rowStart, rowEnd, columnStart, columnEnd)) {
         columnStart = overlap->columnEnd;
         columnEnd = columnStart + columnSpan;
       }
 
-      recordGridArea(AutoPlacementItem{
-          .columnStart = columnStart,
-          .columnEnd = columnEnd,
-          .rowStart = rowStart,
-          .rowEnd = rowEnd,
-          .node = child});
+      recordGridArea(
+          AutoPlacementItem{
+              .columnStart = columnStart,
+              .columnEnd = columnEnd,
+              .rowStart = rowStart,
+              .rowEnd = rowEnd,
+              .node = child});
       rowStartToColumnStartCache[rowStart] = columnEnd;
     }
   }
@@ -211,8 +212,8 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
       const auto columnStart = columnPlacement.start;
       const auto columnEnd = columnPlacement.end;
 
-      // Set the cursor to the item's column-start line; if that moves the cursor
-      // backwards, advance to the next row.
+      // Set the cursor to the item's column-start line; if that moves the
+      // cursor backwards, advance to the next row.
       const auto previousColumnPosition = autoPlacementCursor[0];
       autoPlacementCursor[0] = columnStart;
       if (autoPlacementCursor[0] < previousColumnPosition) {
@@ -228,12 +229,13 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
         autoPlacementCursor[1] = overlap->rowEnd;
       }
 
-      recordGridArea(AutoPlacementItem{
-          .columnStart = columnStart,
-          .columnEnd = columnEnd,
-          .rowStart = autoPlacementCursor[1],
-          .rowEnd = autoPlacementCursor[1] + rowSpan,
-          .node = child});
+      recordGridArea(
+          AutoPlacementItem{
+              .columnStart = columnStart,
+              .columnEnd = columnEnd,
+              .rowStart = autoPlacementCursor[1],
+              .rowEnd = autoPlacementCursor[1] + rowSpan,
+              .node = child});
     }
     // If the item has an automatic position in both axes, sweep the cursor
     // left-to-right then top-to-bottom until it fits.
@@ -249,17 +251,17 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
           const auto rowStart = autoPlacementCursor[1];
           const auto rowEnd = rowStart + itemRowSpan;
 
-          if (const auto* overlap =
-                  occupancy.hasOverlap(
-                      rowStart, rowEnd, columnStart, columnEnd)) {
+          if (const auto* overlap = occupancy.hasOverlap(
+                  rowStart, rowEnd, columnStart, columnEnd)) {
             autoPlacementCursor[0] = overlap->columnEnd;
           } else {
-            recordGridArea(AutoPlacementItem{
-                .columnStart = columnStart,
-                .columnEnd = columnEnd,
-                .rowStart = rowStart,
-                .rowEnd = rowEnd,
-                .node = child});
+            recordGridArea(
+                AutoPlacementItem{
+                    .columnStart = columnStart,
+                    .columnEnd = columnEnd,
+                    .rowStart = rowStart,
+                    .rowEnd = rowEnd,
+                    .node = child});
             foundPosition = true;
             break;
           }
@@ -282,7 +284,8 @@ AutoPlacement AutoPlacement::performAutoPlacement(Node* node) {
       .maxRowEnd = maxRowEnd};
 }
 
-// 1. Runs the grid placement algorithm and normalizes the output into the 0-based coordinate space.
+// 1. Runs the grid placement algorithm and normalizes the output into the
+// 0-based coordinate space.
 // 2. Builds the baseline sharing groups for each row.
 ResolvedAutoPlacement ResolvedAutoPlacement::resolveGridItemPlacements(
     Node* node) {
