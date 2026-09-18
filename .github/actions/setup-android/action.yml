@@ -1,7 +1,7 @@
 name: Setup Android environment
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Select Java Version
       uses: actions/setup-java@v2

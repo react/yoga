@@ -10,6 +10,10 @@
 
 namespace facebook::yoga {
 
+#if defined(__LP64__) || defined(_WIN64)
+static_assert(sizeof(Style) <= 160, "Style grew. Was this intended?");
+#endif
+
 TEST(Style, computed_padding_is_floored) {
   yoga::Style style;
   style.setPadding(Edge::All, StyleLength::points(-1.0f));

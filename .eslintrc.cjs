@@ -70,7 +70,7 @@ module.exports = {
     },
     // Node
     {
-      files: ['**/.*rc.(c){j,t}s', '**/*.config.?(c){j,t}s'],
+      files: ['**/.*rc.(c){j,t}s', '**/*.config.?(c){j,t}s', 'scripts/**/*.js'],
       env: {
         node: true,
       },

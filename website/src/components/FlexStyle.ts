@@ -32,11 +32,7 @@ export type AlignContent =
   | 'space-evenly';
 
 export type AlignItems =
-  | 'flex-start'
-  | 'flex-end'
-  | 'center'
-  | 'stretch'
-  | 'baseline';
+  'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
 
 export type JustifyContent =
   | 'flex-start'

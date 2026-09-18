@@ -21,14 +21,12 @@ Yoga 3.0 is a new major (breaking) version of Yoga, used by React Native 0.74.
 
 We added full support for the `static` position type which has existed in an incomplete state for some time now. With this release `static` is now web-compliant in the context of Flexbox. Some things that were added/changed:
 
-* The default position type is now `relative` [again](https://github.com/facebook/yoga/commit/fc88b2f774f0ab9090d7ca15de6680f26d7285ad) and not `static`. This should not have any effect on layout as the previously introduced `YGPositionTypeStatic` was not being used within Yoga, so it behaved just like `relative`.
-* `static` nodes ignore insets (`left`, `right`, `top`, `bottom`, etc.)
-* The idea of a[ containing block](../../docs/advanced/containing-block) was introduced. For `absolute` nodes this is usually the nearest non-`static` ancestor. For every other position type this is just the parent since Yoga is a Flexbox implementation.
-* A new public API `YGNodeSetAlwaysFormsContainingBlock` which takes a boolean indicating if the node should always form a containing block for any descendant. This is useful for properly supporting things like [transforms](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_transforms), which will force the node to form a containing block but is outside the scope of Yoga.
-
+- The default position type is now `relative` [again](https://github.com/facebook/yoga/commit/fc88b2f774f0ab9090d7ca15de6680f26d7285ad) and not `static`. This should not have any effect on layout as the previously introduced `YGPositionTypeStatic` was not being used within Yoga, so it behaved just like `relative`.
+- `static` nodes ignore insets (`left`, `right`, `top`, `bottom`, etc.)
+- The idea of a[ containing block](../../docs/advanced/containing-block) was introduced. For `absolute` nodes this is usually the nearest non-`static` ancestor. For every other position type this is just the parent since Yoga is a Flexbox implementation.
+- A new public API `YGNodeSetAlwaysFormsContainingBlock` which takes a boolean indicating if the node should always form a containing block for any descendant. This is useful for properly supporting things like [transforms](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_transforms), which will force the node to form a containing block but is outside the scope of Yoga.
 
 `position: static` affects some concerns outside of layout, like stacking context. The full set of behaviors is enabled in the React Native New Architecture.
-
 
 ## Better support for absolute positioning
 
@@ -176,7 +174,6 @@ child: {
 
 </table>
 
-
 There were other fixes not specifically mentioned above. Because this change may result in layout differences for many real-world scenarios, Yoga may be configured to prefer the legacy behavior, by setting the `AbsolutePositioningIncorrect` erratum. This means this fix is not enabled by default in frameworks like React Native, in order to preserve compatibility.
 
 Additionally, Yoga will now correctly account for padding when calculating the size of absolutely positioned nodes with percentage lengths.
@@ -224,9 +221,7 @@ child: {
 
 </table>
 
-
 Just like with positioning, this fix may result in layout differences in many cases. Setting the `AbsolutePercentAgainstInnerSize` erratum will preserve the legacy behavior, which is set by default in frameworks like React Native.
-
 
 ## Better support for multiline containers
 
@@ -240,7 +235,6 @@ Yoga now supports `align-content: space-evenly`, contributed by [@nicoburns](htt
 
 Yoga now correctly supports the combination of `align-content` and `align-items` when both cause changes to alignment.
 
-
 <table>
 
 <tr>
@@ -252,7 +246,6 @@ Yoga now correctly supports the combination of `align-content` and `align-items`
 <td>
 
 ```jsx
-
 <Node
   style={{
     width: 300,
@@ -262,8 +255,7 @@ Yoga now correctly supports the combination of `align-content` and `align-items`
     flexWrap: 'wrap',
     alignContent: 'space-around',
     alignItems: 'flex-end',
-  }}
->
+  }}>
   <Node
     style={{
       width: 150,
@@ -308,7 +300,6 @@ Yoga now correctly supports the combination of `align-content` and `align-items`
 
 > https://github.com/facebook/yoga/issues/1008
 
-
 Yoga now correctly supports `min-height` set on a multiline container.
 
 <table>
@@ -332,8 +323,7 @@ Yoga now correctly supports `min-height` set on a multiline container.
     justifyContent: 'center',
     padding: 10,
     gap: 10,
-  }}
->
+  }}>
   <Node
     style={{
       backgroundColor: 'red',
@@ -369,7 +359,6 @@ Yoga now correctly supports `min-height` set on a multiline container.
 
 </table>
 
-
 ## Correct handling of logical edges in row-reverse containers
 
 Yoga would previously incorrectly reverse `start` and `end` edges, when operating on:
@@ -399,16 +388,14 @@ We determined that few enough surfaces are impacted by this bug to enable the co
     margin: 10,
     width: 200,
     height: 100,
-  }}
->
+  }}>
   <Node
     style={{
       flexDirection: 'row-reverse',
       backgroundColor: 'blue',
       flex: 1,
       marginStart: 50,
-    }}
-  >
+    }}>
     <Node
       style={{
         backgroundColor: 'green',
@@ -443,7 +430,6 @@ We determined that few enough surfaces are impacted by this bug to enable the co
 
 Yoga previously calculated an incorrect main-axis size for containers which specified a min-dimension on the main axis, and have a `justify-content` of `space-around` or `space-between`.
 
-
 <table>
 
 <tr>
@@ -465,8 +451,7 @@ Yoga previously calculated an incorrect main-axis size for containers which spec
     padding: 10,
     justifyContent: 'space-between',
     alignItems: 'center',
-  }}
->
+  }}>
   <Node
     style={{
       backgroundColor: 'blue',
@@ -482,7 +467,6 @@ Yoga previously calculated an incorrect main-axis size for containers which spec
     }}
   />
 </Node>
-
 ```
 
 </td>
@@ -505,7 +489,6 @@ Yoga previously calculated an incorrect main-axis size for containers which spec
 
 This change was observed to impact existing layouts rarely enough to enable globally, and while this change was not present in Yoga 2.0, it was present in the version of Yoga ultimately shipped in React Native 0.73.
 
-
 ## Distribution as an ES Module
 
 Yoga’s previous JavaScript package exported a convoluted matrix of different binaries, across asm.js and wasm, sync vs async, and browser vs node.
@@ -514,15 +497,12 @@ When it came time to look at adding ES Module support into the mix, we decided t
 
 The underlying binary is still distributed as a JavaScript blob of base64 encoded WebAssembly, usable across different environments and bundlers.
 
-
 ## Java reliability improvements
 
 Several crashes have been fixed in Yoga’s Java bindings:
 
 1. Yoga for Java [no longer performs an invalid read](https://github.com/facebook/yoga/commit/38ad93c87baa2127872892a6da674fc93e84f4b8) if a message is logged
 2. Yoga for Java now makes [more efficient use of JNI references](https://github.com/facebook/yoga/commit/49fbd406b62566d8b243297725d3485d9de9d442). This can help avoid app crashes in large trees, or interaction with other layout systems also using JNI.
-
-
 
 ## Infrastructure changes
 
@@ -538,9 +518,7 @@ Yoga’s reference Android build and accompanying artifacts now target Android S
 
 Yoga now compiles cleanly against higher warning levels, such as `-Wextra` and `-Wconversion` in Clang/GCC, and `/W4` in MSVC.
 
-
 ## Deprecations and removals
-
 
 ### Changes to C++ APIs
 
@@ -549,14 +527,11 @@ Yoga’s previous structure made it easy to intermingle Yoga’s public APIs, an
 1. Every top-level header is now a public API
 2. All public APIs may be used from C, C++, Objective C, and Swift
 
-
 We have made some minor changes to this public API, which will require changes for Yoga integrators. The most significant is an increased const-correctness, which may require mechanical changes to measure functions. Yoga’s internal implementation has seen more radical changes.
-
 
 ### Removal of `UseLegacyStretchBehaviour`
 
 APIs related to `UseLegacyStretchBehaviour` were deprecated as part of Yoga 2.0, and have now been removed. Users of `UseLegacyStretchBehaviour` should most often [set their errata level](../../docs/getting-started/configuring-yoga#layout-conformance-and-yoga-errata) to `All` to opt-out of future conformance fixes.
-
 
 ### Removal of YogaKit and the YogaLayout ViewGroup
 
@@ -577,7 +552,7 @@ Yoga includes a reference CMake build, and has official bindings published acros
 {
   "dependencies": {
     "yoga-layout": "^3.0.0"
-   }
+  }
 }
 ```
 

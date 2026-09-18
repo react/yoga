@@ -7,7 +7,8 @@ Yoga is an embeddable and performant flexbox layout engine with bindings for mul
 Yoga's main implementation targets C++ 20 with accompanying build logic in CMake. A wrapper is provided to build the main library and run unit tests.
 
 ```sh
-./unit_tests <Debug|Release>
+./unit_tests Debug
+./unit_tests Release
 ```
 
 While not required, this script will use [ninja](https://ninja-build.org/) if it is installed for faster builds.

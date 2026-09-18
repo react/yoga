@@ -1,7 +1,7 @@
 name: Setup JavaScript envirionment
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Setup Node environment
       uses: actions/setup-node@v3

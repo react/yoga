@@ -77,7 +77,7 @@ publishing {
       afterEvaluate { from(components["default"]) }
       pom {
         description.set(
-            "An embeddable and performant flexbox layout engine with bindings for multiple languages"
+            "An embeddable and performant flexbox layout engine with bindings for multiple languages",
         )
         name.set(project.name)
         url.set("https://github.com/facebook/yoga.git")

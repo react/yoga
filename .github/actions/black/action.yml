@@ -9,7 +9,7 @@ inputs:
     default: 22.3.0
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Ensure supported Python selected
       uses: actions/setup-python@v4

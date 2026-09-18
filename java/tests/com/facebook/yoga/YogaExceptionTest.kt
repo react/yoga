@@ -38,7 +38,7 @@ class YogaExceptionTest {
 
     val child2 = createNode()
     child2.setBaselineFunction(
-        YogaBaselineFunction { node, width, height -> throw RuntimeException() }
+        YogaBaselineFunction { node, width, height -> throw RuntimeException() },
     )
     root.addChildAt(child2, 1)
 
@@ -61,7 +61,7 @@ class YogaExceptionTest {
           val e = RuntimeException()
           expected.set(e)
           throw e
-        }
+        },
     )
     root.addChildAt(child2, 1)
 
@@ -71,7 +71,7 @@ class YogaExceptionTest {
         YogaBaselineFunction { node, width, height ->
           child3Called.set(true)
           1.0f
-        }
+        },
     )
     root.addChildAt(child3, 2)
 
@@ -90,7 +90,7 @@ class YogaExceptionTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           throw RuntimeException()
-        }
+        },
     )
     node.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
   }
@@ -111,7 +111,7 @@ class YogaExceptionTest {
           val e = RuntimeException()
           expected.set(e)
           throw e
-        }
+        },
     )
     root.addChildAt(child2, 1)
 
@@ -121,7 +121,7 @@ class YogaExceptionTest {
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           child3Called.set(true)
           1L
-        }
+        },
     )
     root.addChildAt(child3, 2)
 

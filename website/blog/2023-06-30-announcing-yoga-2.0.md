@@ -8,12 +8,12 @@ authors:
 We are excited to announce a new major (breaking) version of Yoga. This release contains 198 new commits from 64 contributors, and includes the first significant changes to Yoga in open-source since 2018.
 
 While there has been a [long gap in development](https://github.com/facebook/yoga/issues/1151), the React Native team believes Yoga is a critical tool in delivering the future of React, and we have resumed development of the engine. This release of Yoga is focused on:
+
 1. Delivering the features we have shipped to React Native to standalone Yoga users
 2. Updating toolchains, packaging, and build systems to make Yoga easier to consume
 3. API changes to allow us to evolve the engine towards conformance
 
 Yoga continuously ships to thousands of surfaces across multiple frameworks at Meta. This version of Yoga corresponds to the version which will be included in React Native 0.73 shipping this fall.
-
 
 ## Flexbox gap
 
@@ -34,12 +34,12 @@ node.setGap(YogaGutter.ROW, 2.0f);
 node.setGap(Gutter.Row, 2);
 ```
 
-
 ## Toolchain
 
 Meta uses [Buck](https://buck.build/) across its monorepo, but we recognize that Buck has acted as a barrier to be able to use Yoga outside of Meta. Yoga no longer ships build logic for Buck to open-source. We have instead added over 20 new validation jobs to GitHub Actions to continually validate that Yoga builds correctly in common systems and scenarios where Yoga is used in OSS.
 
 New toolchain support includes:
+
 1. A reference CMake build for Yoga and its unit tests
 1. A modern Gradle build and published AARs
 1. Compatibility with XCode 14.3+
@@ -90,7 +90,6 @@ Two variants are shipped:
 
 Both are about 45KB when gzipped.
 
-
 WebAssembly binaries must be asynchronously compiled and loaded in Chrome. In the absence of universal support for top-level await, we have made the breaking change to require explicitly asynchronously loading Yoga before using it.
 
 ```ts
@@ -101,8 +100,7 @@ const node = Yoga.Node.create();
 node.setAlignContent(Align.Center);
 ```
 
-
-The previous behavior of blocking to load the binary can be replicated by importing from the  `yoga-layout/sync` entrypoint, but this is not recommended for new usages, and does not allow using WebAssembly on browsers.
+The previous behavior of blocking to load the binary can be replicated by importing from the `yoga-layout/sync` entrypoint, but this is not recommended for new usages, and does not allow using WebAssembly on browsers.
 
 ```ts
 import Yoga, {ALIGN_CENTER} from 'yoga-layout/sync';
@@ -119,19 +117,22 @@ import {loadYoga} from 'yoga-layout/wasm-async';
 
 > Note: the `yoga-layout` package requires your bundler and typechecker to configured to be able to follow the package `exports `field.
 
-
 ## Deprecations and removals
 
 ### YogaKit and YogaLayout ViewGroup
+
 We are deprecating, `YogaKit` and the `YogaLayout` ViewGroup. These libraries allow initegrating Yoga directly with UIKit and the Android view system, but are not widely used by Meta in production. We are instead focusing on higher-level libraries using Yoga like [Litho](https://fblitho.com/) and [React Native](https://reactnative.dev/). Because we aren’t in a place to continue development, or validate contributions, we are discontinuing development. These libraries will not receive future updates beyond the Yoga `release-v2.0` branch.
 
 ### UseLegacyStretchBehaviour
+
 The functions to manipulate `UseLegacyStretchBehaviour` have been deprecated. Previous users of the API should now set an appropriate errata level, like `YGErrataAll` to opt-out of all future conformance fixes.
 
 ### C# bindings
+
 C# bindings were contributed to the Yoga repo but have since degraded. The bindings have not had working build validation, or a consistent contributor. We have removed them from the Yoga repo, but we will continue to provide a public C ABI for others to build bindings on top of.
 
 ### Private C++ APIs
+
 Yoga’s header structure has historically allowed the inclusion of concrete internal structures like `YGStyle` or `YGNode`. We will begin to enforce that users instead rely on the public C APIs provided by `#include <yoga/Yoga.h>`. Other C++ APIs may change without notice.
 
 ```cpp
@@ -150,11 +151,9 @@ YGConfig config{yogaLogger_};
 config.pointScaleFactor = 1.0f;
 ```
 
-
 ### C++ 11 Support
 
 Yoga now requires a compiler which supports C++ 14. This will likely be bumped to C++ 17 in a future minor release.
-
 
 ## How do I get it?
 
@@ -178,7 +177,6 @@ dependencies {
 # Podfile
 pod 'Yoga', '~> 2.0.0'
 ```
-
 
 ## Acknowledgements
 
