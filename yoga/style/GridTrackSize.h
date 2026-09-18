@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace facebook::yoga {
-// Represents a track size as defined in 
+// Represents a track size as defined in
 // https://www.w3.org/TR/css-grid-1/#typedef-track-size
 // and helper functions for creating common track sizes.
 struct GridTrackSize {
