@@ -200,10 +200,12 @@ TEST(YogaTest, config_update_invalidates_layout_detects_each_property) {
 TEST(YogaTest, config_errata_bitmask_add_remove_operations) {
   auto* config = static_cast<yoga::Config*>(YGConfigNew());
 
-  // Default config carries MinSizeUndefinedInsteadOfAuto (legacy preservation
-  // for CSS §4.5 auto-min). Clear it for this test so we can assert exact
-  // equality at the end.
+  // Default configs carry the errata that preserve legacy geometry
+  // (MinSizeUndefinedInsteadOfAuto for CSS §4.5 auto-min,
+  // FlexFirstPassUsesRunningTotals for free-space distribution). Clear them
+  // for this test so we can assert exact equality at the end.
   config->removeErrata(yoga::Errata::MinSizeUndefinedInsteadOfAuto);
+  config->removeErrata(yoga::Errata::FlexFirstPassUsesRunningTotals);
 
   // Initially no errata
   ASSERT_FALSE(config->hasErrata(yoga::Errata::StretchFlexBasis));

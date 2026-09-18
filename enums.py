@@ -92,6 +92,14 @@ ENUMS = {
         # default on new configs to preserve pre-§4.5 Yoga shrink behavior.
         # Clear this bit to opt into the spec-correct CSS §4.5 floor.
         ("MinSizeUndefinedInsteadOfAuto", 1 << 3),
+        # In the first free-space distribution pass, size each item against
+        # the running flex totals, which shrink as earlier items freeze,
+        # rather than against the totals captured before the pass began. This
+        # inflates the share offered to later items so they freeze
+        # spuriously, and makes the pass depend on child order. Set by
+        # default on new configs to preserve the pre-fix geometry. Clear this
+        # bit to opt into the spec-correct single distribution.
+        ("FlexFirstPassUsesRunningTotals", 1 << 4),
         # Enable all incorrect behavior (preserve compatibility)
         ("All", 0x7FFFFFFF),
         # Enable all errata except for "StretchFlexBasis" (Defaults behavior

@@ -62,7 +62,7 @@ class YogaNodeTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           YogaMeasureOutput.make(100, 100)
-        }
+        },
     )
     node.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
     assertEquals(100, node.layoutWidth.toInt())
@@ -75,7 +75,7 @@ class YogaNodeTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           YogaMeasureOutput.make(100.5f, 100.5f)
-        }
+        },
     )
     node.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
     assertEquals(101f, node.layoutWidth, 0.01f)
@@ -88,7 +88,7 @@ class YogaNodeTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           YogaMeasureOutput.make(Float.MIN_VALUE, Float.MIN_VALUE)
-        }
+        },
     )
     node.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
     assertEquals(Float.MIN_VALUE, node.layoutWidth, 0.01f)
@@ -102,7 +102,7 @@ class YogaNodeTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           YogaMeasureOutput.make(bigNumber, bigNumber)
-        }
+        },
     )
     node.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
     assertEquals(bigNumber, node.layoutWidth, 0.01f)
@@ -284,7 +284,7 @@ class YogaNodeTest {
     node.setMeasureFunction(
         YogaMeasureFunction { node, width, widthMode, height, heightMode ->
           YogaMeasureOutput.make(100, 100)
-        }
+        },
     )
     node.setBaselineFunction(YogaBaselineFunction { node, width, height -> height })
     node.data = ArrayList<Any>()

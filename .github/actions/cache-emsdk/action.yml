@@ -1,7 +1,7 @@
 name: Cache the installed copy of emsdk and its build artifacts
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Cache emsdk
       uses: actions/cache@v3
