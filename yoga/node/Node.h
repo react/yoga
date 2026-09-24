@@ -286,6 +286,7 @@ class YG_EXPORT Node : public ::YGNode {
   void setChildren(const std::vector<Node*>& children);
   void setLayoutLastOwnerDirection(Direction direction);
   void setLayoutComputedFlexBasis(FloatOptional computedFlexBasis);
+  void setLayoutComputedFlexBasisIsMeasured(bool computedFlexBasisIsMeasured);
   void setLayoutComputedFlexBasisGeneration(
       uint32_t computedFlexBasisGeneration);
   void setLayoutMeasuredDimension(float measuredDimension, Dimension dimension);

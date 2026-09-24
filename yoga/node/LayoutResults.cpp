@@ -24,7 +24,8 @@ bool LayoutResults::operator==(LayoutResults layout) const {
       configVersion == layout.configVersion &&
       nextCachedMeasurementsIndex == layout.nextCachedMeasurementsIndex &&
       cachedLayout == layout.cachedLayout &&
-      computedFlexBasis == layout.computedFlexBasis;
+      computedFlexBasis == layout.computedFlexBasis &&
+      computedFlexBasisIsMeasured == layout.computedFlexBasisIsMeasured;
 
   for (uint32_t i = 0; i < LayoutResults::MaxCachedMeasurements && isEqual;
        ++i) {

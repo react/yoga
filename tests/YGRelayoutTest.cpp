@@ -8,6 +8,52 @@
 #include <gtest/gtest.h>
 #include <yoga/Yoga.h>
 
+#include <cmath>
+#include <limits>
+
+/*
+ * Behaves like wrapping text: 2000pt of content laid out at the available
+ * width with a 20pt line height, so a narrower box measures taller.
+ */
+static YGSize _simulateWrappingText(
+    YGNodeConstRef /*node*/,
+    float width,
+    YGMeasureMode widthMode,
+    float height,
+    YGMeasureMode heightMode) {
+  const float maxWidth = widthMode == YGMeasureModeUndefined
+      ? std::numeric_limits<float>::infinity()
+      : width;
+  const float lines = std::isfinite(maxWidth) && maxWidth > 0
+      ? std::ceil(2000.0f / maxWidth)
+      : 1.0f;
+  const float naturalHeight = lines * 20.0f;
+
+  YGSize size{std::isfinite(maxWidth) ? maxWidth : 2000.0f, naturalHeight};
+  if (heightMode == YGMeasureModeExactly) {
+    size.height = height;
+  } else if (heightMode == YGMeasureModeAtMost && naturalHeight > height) {
+    size.height = height;
+  }
+  if (widthMode == YGMeasureModeExactly) {
+    size.width = width;
+  }
+
+  return size;
+}
+
+/*
+ * Pins the root to an exact size, the way a host platform does when the
+ * available space changes (e.g. a device rotation), then lays out.
+ */
+static void _layoutAtSize(YGNodeRef root, float width, float height) {
+  YGNodeStyleSetMinWidth(root, width);
+  YGNodeStyleSetMaxWidth(root, width);
+  YGNodeStyleSetMinHeight(root, height);
+  YGNodeStyleSetMaxHeight(root, height);
+  YGNodeCalculateLayout(root, width, height, YGDirectionLTR);
+}
+
 TEST(YogaTest, dont_cache_computed_flex_basis_between_layouts) {
   YGConfigRef config = YGConfigNew();
   YGConfigSetExperimentalFeatureEnabled(
@@ -252,4 +298,61 @@ TEST(YogaTest, has_new_layout_flag_set_static) {
   ASSERT_TRUE(YGNodeGetHasNewLayout(root_child0_child0_child0));
 
   YGNodeFreeRecursive(root);
+}
+
+/*
+ * A flex basis measured from a child's content during an earlier layout must
+ * not be reused once the available size changes. The wrapper levels let an
+ * ancestor's measurement cache answer for the whole subtree during the
+ * max-content pass, skipping the measurement that would otherwise refresh the
+ * stored basis.
+ */
+TEST(YogaTest, measured_flex_basis_is_not_reused_after_relayout_at_new_size) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+
+  YGNodeRef scrollView = YGNodeNewWithConfig(config);
+  YGNodeStyleSetOverflow(scrollView, YGOverflowScroll);
+  YGNodeStyleSetFlexGrow(scrollView, 1);
+  YGNodeStyleSetFlexShrink(scrollView, 1);
+  YGNodeInsertChild(root, scrollView, 0);
+
+  YGNodeRef contentContainer = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(scrollView, contentContainer, 0);
+
+  YGNodeRef autoHeightColumn = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(contentContainer, autoHeightColumn, 0);
+
+  YGNodeRef flexColumn = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlex(flexColumn, 1);
+  YGNodeInsertChild(autoHeightColumn, flexColumn, 0);
+
+  YGNodeRef fixedSibling = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(fixedSibling, 24);
+  YGNodeInsertChild(flexColumn, fixedSibling, 0);
+
+  YGNodeRef wrapper0 = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(flexColumn, wrapper0, 1);
+
+  YGNodeRef wrapper1 = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(wrapper0, wrapper1, 0);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlex(text, 1);
+  YGNodeSetMeasureFunc(text, _simulateWrappingText);
+  YGNodeInsertChild(wrapper1, text, 0);
+
+  _layoutAtSize(root, 400, 800);
+  const float portraitHeight = YGNodeLayoutGetHeight(text);
+
+  _layoutAtSize(root, 800, 400);
+  _layoutAtSize(root, 400, 800);
+
+  ASSERT_FLOAT_EQ(portraitHeight, YGNodeLayoutGetHeight(text));
+  ASSERT_FLOAT_EQ(
+      YGNodeLayoutGetHeight(wrapper0), YGNodeLayoutGetHeight(wrapper1));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
 }

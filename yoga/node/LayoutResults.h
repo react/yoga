@@ -27,6 +27,11 @@ struct LayoutResults {
   uint32_t computedFlexBasisGeneration = 0;
   FloatOptional computedFlexBasis = {};
 
+  // True when `computedFlexBasis` holds a size measured from the child's own
+  // content (the max-content pass), false when it was resolved from
+  // `flex-basis` or from a style dimension.
+  bool computedFlexBasisIsMeasured = false;
+
   // Per-flex-item floor along the main axis derived from CSS Flexbox §4.5
   // automatic minimum sizing. Set by `resolveFlexibleLength` when the parent's
   // config does NOT carry the `MinSizeUndefinedInsteadOfAuto` errata and the
