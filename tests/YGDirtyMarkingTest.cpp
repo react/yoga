@@ -339,3 +339,29 @@ TEST(YogaTest, dirty_parent_when_subtree_freed_recursive) {
   EXPECT_TRUE(YGNodeIsDirty(root));
   YGNodeFree(root);
 }
+
+TEST(YogaTest, dirty_propagation_through_child_set_to_display_contents) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef child = YGNodeNew();
+  YGNodeInsertChild(root, child, 0);
+
+  YGNodeRef grandchild = YGNodeNew();
+  YGNodeStyleSetWidth(grandchild, 10);
+  YGNodeStyleSetHeight(grandchild, 10);
+  YGNodeInsertChild(child, grandchild, 0);
+
+  YGNodeStyleSetDisplay(child, YGDisplayContents);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  EXPECT_FALSE(YGNodeIsDirty(child));
+
+  YGNodeStyleSetWidth(grandchild, 20);
+  EXPECT_TRUE(YGNodeIsDirty(root));
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(20, YGNodeLayoutGetWidth(grandchild));
+
+  YGNodeFreeRecursive(root);
+}
