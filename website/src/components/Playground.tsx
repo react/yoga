@@ -61,7 +61,7 @@ export default function Playground({code, height, autoFocus}: Props) {
     // The toolbar is positioned relative to the outside of the scrolling
     // container so it stays in the same place when scrolling, but this means
     // it isn't automatically adjusted for scrollbar width. If code change
-    // causes overflow/scrollbar, adjust its position based on its width progrmatically.
+    // causes overflow/scrollbar, adjust its position based on its width programmatically.
     if (editorScrollRef.current) {
       setScrollbarWidth(
         editorScrollRef.current.offsetWidth -

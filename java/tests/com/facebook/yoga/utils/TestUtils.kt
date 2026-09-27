@@ -43,9 +43,9 @@ class TestUtils {
           if (heightMode == YogaMeasureMode.EXACTLY) {
             height
           } else if (heightMode == YogaMeasureMode.AT_MOST) {
-            Math.min(caclulateHeight(text, effectiveWidth), height)
+            Math.min(calculateHeight(text, effectiveWidth), height)
           } else {
-            caclulateHeight(text, effectiveWidth)
+            calculateHeight(text, effectiveWidth)
           }
 
       return YogaMeasureOutput.make(measuredWidth, measuredHeight)
@@ -69,7 +69,7 @@ class TestUtils {
       }
 
       @JvmStatic
-      fun caclulateHeight(text: String, measuredWidth: Float): Float {
+      fun calculateHeight(text: String, measuredWidth: Float): Float {
         if (text.length * widthPerChar <= measuredWidth) {
           return heightPerChar
         }
