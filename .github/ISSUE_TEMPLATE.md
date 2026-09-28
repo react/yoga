@@ -4,7 +4,7 @@
 
 # Issues and Steps to Reproduce
 
-_**Replaces this with steps to repro your issue.**_
+_**Replace this with steps to repro your issue.**_
 
 # Expected Behavior
 
