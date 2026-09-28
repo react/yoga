@@ -31,7 +31,7 @@ TEST(YogaTest, dont_cache_computed_flex_basis_between_layouts) {
   YGConfigFree(config);
 }
 
-TEST(YogaTest, recalculate_resolvedDimonsion_onchange) {
+TEST(YogaTest, recalculate_resolvedDimension_onchange) {
   YGNodeRef root = YGNodeNew();
 
   YGNodeRef root_child0 = YGNodeNew();

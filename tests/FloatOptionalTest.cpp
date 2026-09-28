@@ -197,7 +197,7 @@ TEST(FloatOptional, addition) {
   ASSERT_EQ(negative + empty, empty);
 }
 
-TEST(YGFloatOptiona, maxOrDefined) {
+TEST(FloatOptional, maxOrDefined) {
   ASSERT_EQ(yoga::maxOrDefined(empty, empty), empty);
   ASSERT_EQ(yoga::maxOrDefined(empty, positive), positive);
   ASSERT_EQ(yoga::maxOrDefined(negative, empty), negative);

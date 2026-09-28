@@ -121,7 +121,7 @@ import {loadYoga} from 'yoga-layout/wasm-async';
 
 ### YogaKit and YogaLayout ViewGroup
 
-We are deprecating, `YogaKit` and the `YogaLayout` ViewGroup. These libraries allow initegrating Yoga directly with UIKit and the Android view system, but are not widely used by Meta in production. We are instead focusing on higher-level libraries using Yoga like [Litho](https://fblitho.com/) and [React Native](https://reactnative.dev/). Because we aren’t in a place to continue development, or validate contributions, we are discontinuing development. These libraries will not receive future updates beyond the Yoga `release-v2.0` branch.
+We are deprecating, `YogaKit` and the `YogaLayout` ViewGroup. These libraries allow integrating Yoga directly with UIKit and the Android view system, but are not widely used by Meta in production. We are instead focusing on higher-level libraries using Yoga like [Litho](https://fblitho.com/) and [React Native](https://reactnative.dev/). Because we aren’t in a place to continue development, or validate contributions, we are discontinuing development. These libraries will not receive future updates beyond the Yoga `release-v2.0` branch.
 
 ### UseLegacyStretchBehaviour
 
