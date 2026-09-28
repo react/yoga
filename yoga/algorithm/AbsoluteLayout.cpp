@@ -279,6 +279,14 @@ void layoutAbsoluteChild(
   auto marginColumn = child->style().computeMarginForAxis(
       FlexDirection::Column, containingBlockWidth);
 
+  // An axis set to max-content is sized to the box's measured max-content
+  // size. It ignores insets and available space for sizing.
+  // https://www.w3.org/TR/css-sizing-3/#valdef-width-max-content
+  const bool widthIsMaxContent =
+      child->getProcessedDimension(Dimension::Width).isMaxContent();
+  const bool heightIsMaxContent =
+      child->getProcessedDimension(Dimension::Height).isMaxContent();
+
   if (child->hasDefiniteLength(Dimension::Width, containingBlockWidth)) {
     childWidth = child
                      ->getResolvedDimension(
@@ -291,7 +299,8 @@ void layoutAbsoluteChild(
   } else {
     // If the child doesn't have a specified width, compute the width based on
     // the left/right offsets if they're defined.
-    if (child->style().isFlexStartPositionDefined(
+    if (!widthIsMaxContent &&
+        child->style().isFlexStartPositionDefined(
             FlexDirection::Row, direction) &&
         child->style().isFlexEndPositionDefined(
             FlexDirection::Row, direction) &&
@@ -330,7 +339,8 @@ void layoutAbsoluteChild(
   } else {
     // If the child doesn't have a specified height, compute the height based
     // on the top/bottom offsets if they're defined.
-    if (child->style().isFlexStartPositionDefined(
+    if (!heightIsMaxContent &&
+        child->style().isFlexStartPositionDefined(
             FlexDirection::Column, direction) &&
         child->style().isFlexEndPositionDefined(
             FlexDirection::Column, direction) &&
@@ -363,7 +373,13 @@ void layoutAbsoluteChild(
   // flexible.
   const auto& childStyle = child->style();
   if (yoga::isUndefined(childWidth) ^ yoga::isUndefined(childHeight)) {
-    if (childStyle.aspectRatio().isDefined()) {
+    // The aspect ratio never transfers INTO a max-content axis, and cannot yet transfer OUT of one: the measured
+    // value does not exist until after this point, so the other axis takes
+    // its content size instead. Browsers do transfer from the resolved value.
+    // TODO: derive the other axis from the measured value after the measure
+    // pass, then enable the disabled fixture case max_content_with_aspect_ratio
+    if (childStyle.aspectRatio().isDefined() && !widthIsMaxContent &&
+        !heightIsMaxContent) {
       if (yoga::isUndefined(childWidth)) {
         childWidth = marginRow +
             (childHeight - marginColumn) * childStyle.aspectRatio().unwrap();
@@ -388,7 +404,7 @@ void layoutAbsoluteChild(
     // to wrap to the size of its owner. This is the same behavior as many
     // browsers implement.
     if (!isMainAxisRow && yoga::isUndefined(childWidth) &&
-        widthMode != SizingMode::MaxContent &&
+        !widthIsMaxContent && widthMode != SizingMode::MaxContent &&
         yoga::isDefined(containingBlockWidth) && containingBlockWidth > 0) {
       childWidth = containingBlockWidth;
       childWidthSizingMode = SizingMode::FitContent;
