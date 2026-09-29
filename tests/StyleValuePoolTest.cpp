@@ -10,6 +10,11 @@
 
 namespace facebook::yoga {
 
+static YGValue
+dynamicValueCallback(YGNodeConstRef, YGValueDynamicID, YGValueDynamicContext) {
+  return YGValue{0.0f, YGUnitPoint};
+}
+
 TEST(StyleValuePool, undefined_at_init) {
   StyleValuePool pool;
   StyleValueHandle handle;
@@ -141,6 +146,26 @@ TEST(StyleValuePool, store_keywords) {
   EXPECT_EQ(pool.getSize(handleMaxContent), StyleSizeLength::ofMaxContent());
   EXPECT_EQ(pool.getSize(handleFitContent), StyleSizeLength::ofFitContent());
   EXPECT_EQ(pool.getSize(handleStretch), StyleSizeLength::ofStretch());
+}
+
+TEST(StyleValuePool, stores_and_recovers_dynamic) {
+  StyleValuePool pool;
+  StyleValueHandle lengthHandle;
+  StyleValueHandle sizeHandle;
+
+  pool.store(lengthHandle, StyleLength::dynamic(dynamicValueCallback, 11));
+  pool.store(sizeHandle, StyleSizeLength::dynamic(dynamicValueCallback, 12));
+
+  const auto restoredLength = pool.getLength(lengthHandle);
+  const auto restoredSize = pool.getSize(sizeHandle);
+
+  EXPECT_TRUE(restoredLength.isDynamic());
+  EXPECT_EQ(restoredLength.callback(), dynamicValueCallback);
+  EXPECT_EQ(restoredLength.callbackId(), 11);
+
+  EXPECT_TRUE(restoredSize.isDynamic());
+  EXPECT_EQ(restoredSize.callback(), dynamicValueCallback);
+  EXPECT_EQ(restoredSize.callbackId(), 12);
 }
 
 } // namespace facebook::yoga

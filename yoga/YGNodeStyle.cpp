@@ -235,6 +235,14 @@ void YGNodeStyleSetFlexBasisStretch(const YGNodeRef node) {
       node, StyleSizeLength::ofStretch());
 }
 
+void YGNodeStyleSetFlexBasisDynamic(
+    const YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
+      node, StyleSizeLength::dynamic(callback, id));
+}
+
 YGValue YGNodeStyleGetFlexBasis(const YGNodeConstRef node) {
   return (YGValue)resolveRef(node)->style().flexBasis();
 }
@@ -258,6 +266,15 @@ YGValue YGNodeStyleGetPosition(YGNodeConstRef node, YGEdge edge) {
   return (YGValue)resolveRef(node)->style().position(scopedEnum(edge));
 }
 
+void YGNodeStyleSetPositionDynamic(
+    YGNodeRef node,
+    YGEdge edge,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::position, &Style::setPosition>(
+      node, scopedEnum(edge), StyleLength::dynamic(callback, id));
+}
+
 void YGNodeStyleSetMargin(YGNodeRef node, YGEdge edge, float points) {
   updateStyle<&Style::margin, &Style::setMargin>(
       node, scopedEnum(edge), StyleLength::points(points));
@@ -277,6 +294,15 @@ YGValue YGNodeStyleGetMargin(YGNodeConstRef node, YGEdge edge) {
   return (YGValue)resolveRef(node)->style().margin(scopedEnum(edge));
 }
 
+void YGNodeStyleSetMarginDynamic(
+    YGNodeRef node,
+    YGEdge edge,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::margin, &Style::setMargin>(
+      node, scopedEnum(edge), StyleLength::dynamic(callback, id));
+}
+
 void YGNodeStyleSetPadding(YGNodeRef node, YGEdge edge, float points) {
   updateStyle<&Style::padding, &Style::setPadding>(
       node, scopedEnum(edge), StyleLength::points(points));
@@ -289,6 +315,15 @@ void YGNodeStyleSetPaddingPercent(YGNodeRef node, YGEdge edge, float percent) {
 
 YGValue YGNodeStyleGetPadding(YGNodeConstRef node, YGEdge edge) {
   return (YGValue)resolveRef(node)->style().padding(scopedEnum(edge));
+}
+
+void YGNodeStyleSetPaddingDynamic(
+    YGNodeRef node,
+    YGEdge edge,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::padding, &Style::setPadding>(
+      node, scopedEnum(edge), StyleLength::dynamic(callback, id));
 }
 
 void YGNodeStyleSetBorder(
@@ -308,6 +343,15 @@ float YGNodeStyleGetBorder(const YGNodeConstRef node, const YGEdge edge) {
   return static_cast<YGValue>(border).value;
 }
 
+void YGNodeStyleSetBorderDynamic(
+    YGNodeRef node,
+    YGEdge edge,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::border, &Style::setBorder>(
+      node, scopedEnum(edge), StyleLength::dynamic(callback, id));
+}
+
 void YGNodeStyleSetGap(
     const YGNodeRef node,
     const YGGutter gutter,
@@ -319,6 +363,15 @@ void YGNodeStyleSetGap(
 void YGNodeStyleSetGapPercent(YGNodeRef node, YGGutter gutter, float percent) {
   updateStyle<&Style::gap, &Style::setGap>(
       node, scopedEnum(gutter), StyleLength::percent(percent));
+}
+
+void YGNodeStyleSetGapDynamic(
+    YGNodeRef node,
+    YGGutter gutter,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::gap, &Style::setGap>(
+      node, scopedEnum(gutter), StyleLength::dynamic(callback, id));
 }
 
 YGValue YGNodeStyleGetGap(const YGNodeConstRef node, const YGGutter gutter) {
@@ -374,6 +427,14 @@ void YGNodeStyleSetWidthStretch(YGNodeRef node) {
       node, Dimension::Width, StyleSizeLength::ofStretch());
 }
 
+void YGNodeStyleSetWidthDynamic(
+    YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::dimension, &Style::setDimension>(
+      node, Dimension::Width, StyleSizeLength::dynamic(callback, id));
+}
+
 YGValue YGNodeStyleGetWidth(YGNodeConstRef node) {
   return (YGValue)resolveRef(node)->style().dimension(Dimension::Width);
 }
@@ -408,6 +469,14 @@ void YGNodeStyleSetHeightStretch(YGNodeRef node) {
       node, Dimension::Height, StyleSizeLength::ofStretch());
 }
 
+void YGNodeStyleSetHeightDynamic(
+    YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::dimension, &Style::setDimension>(
+      node, Dimension::Height, StyleSizeLength::dynamic(callback, id));
+}
+
 YGValue YGNodeStyleGetHeight(YGNodeConstRef node) {
   return (YGValue)resolveRef(node)->style().dimension(Dimension::Height);
 }
@@ -435,6 +504,14 @@ void YGNodeStyleSetMinWidthFitContent(const YGNodeRef node) {
 void YGNodeStyleSetMinWidthStretch(const YGNodeRef node) {
   updateStyle<&Style::minDimension, &Style::setMinDimension>(
       node, Dimension::Width, StyleSizeLength::ofStretch());
+}
+
+void YGNodeStyleSetMinWidthDynamic(
+    const YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::minDimension, &Style::setMinDimension>(
+      node, Dimension::Width, StyleSizeLength::dynamic(callback, id));
 }
 
 YGValue YGNodeStyleGetMinWidth(const YGNodeConstRef node) {
@@ -468,6 +545,14 @@ void YGNodeStyleSetMinHeightStretch(const YGNodeRef node) {
       node, Dimension::Height, StyleSizeLength::ofStretch());
 }
 
+void YGNodeStyleSetMinHeightDynamic(
+    const YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::minDimension, &Style::setMinDimension>(
+      node, Dimension::Height, StyleSizeLength::dynamic(callback, id));
+}
+
 YGValue YGNodeStyleGetMinHeight(const YGNodeConstRef node) {
   return (YGValue)resolveRef(node)->style().minDimension(Dimension::Height);
 }
@@ -495,6 +580,14 @@ void YGNodeStyleSetMaxWidthFitContent(const YGNodeRef node) {
 void YGNodeStyleSetMaxWidthStretch(const YGNodeRef node) {
   updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
       node, Dimension::Width, StyleSizeLength::ofStretch());
+}
+
+void YGNodeStyleSetMaxWidthDynamic(
+    const YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
+      node, Dimension::Width, StyleSizeLength::dynamic(callback, id));
 }
 
 YGValue YGNodeStyleGetMaxWidth(const YGNodeConstRef node) {
@@ -526,6 +619,14 @@ void YGNodeStyleSetMaxHeightFitContent(const YGNodeRef node) {
 void YGNodeStyleSetMaxHeightStretch(const YGNodeRef node) {
   updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
       node, Dimension::Height, StyleSizeLength::ofStretch());
+}
+
+void YGNodeStyleSetMaxHeightDynamic(
+    const YGNodeRef node,
+    YGValueDynamic callback,
+    YGValueDynamicID id) {
+  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
+      node, Dimension::Height, StyleSizeLength::dynamic(callback, id));
 }
 
 YGValue YGNodeStyleGetMaxHeight(const YGNodeConstRef node) {
