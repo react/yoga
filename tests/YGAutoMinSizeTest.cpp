@@ -59,7 +59,8 @@ YGConfigRef makeWebConfig(bool useAutoMinSize) {
     const YGErrata errata = YGConfigGetErrata(config);
     YGConfigSetErrata(
         config,
-        static_cast<YGErrata>(errata & ~YGErrataMinSizeUndefinedInsteadOfAuto));
+        static_cast<YGErrata>(
+            errata & (YGErrataAll ^ YGErrataMinSizeUndefinedInsteadOfAuto)));
   }
   return config;
 }
@@ -566,7 +567,8 @@ TEST(YogaAutoMinSize, errata_bit_round_trips) {
   YGConfigSetErrata(
       config,
       static_cast<YGErrata>(
-          YGConfigGetErrata(config) & ~YGErrataMinSizeUndefinedInsteadOfAuto));
+          YGConfigGetErrata(config) &
+          (YGErrataAll ^ YGErrataMinSizeUndefinedInsteadOfAuto)));
   EXPECT_EQ(
       YGConfigGetErrata(config) & YGErrataMinSizeUndefinedInsteadOfAuto, 0);
 

@@ -29,7 +29,8 @@ YGConfigRef makeFixedConfig() {
   const YGErrata errata = YGConfigGetErrata(config);
   YGConfigSetErrata(
       config,
-      static_cast<YGErrata>(errata & ~YGErrataFlexFirstPassUsesRunningTotals));
+      static_cast<YGErrata>(
+          errata & (YGErrataAll ^ YGErrataFlexFirstPassUsesRunningTotals)));
   return config;
 }
 
@@ -125,7 +126,8 @@ TEST(YGFirstChildMinWidth, errata_bit_round_trips) {
   YGConfigSetErrata(
       config,
       static_cast<YGErrata>(
-          YGConfigGetErrata(config) & ~YGErrataFlexFirstPassUsesRunningTotals));
+          YGConfigGetErrata(config) &
+          (YGErrataAll ^ YGErrataFlexFirstPassUsesRunningTotals)));
   EXPECT_EQ(
       YGConfigGetErrata(config) & YGErrataFlexFirstPassUsesRunningTotals, 0);
 
