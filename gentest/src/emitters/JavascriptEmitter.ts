@@ -9,6 +9,7 @@
 
 import Emitter from './Emitter.ts';
 import type {ValueWithUnit} from '../types.ts';
+import {quoteJavascriptString} from './stringEscaping.ts';
 
 function toValueJavascript(value: ValueWithUnit): string {
   switch (value.type) {
@@ -248,6 +249,10 @@ export class JavascriptEmitter extends Emitter {
 
   setOverflow(node: string, value: string): void {
     this.push(node + '.setOverflow(' + this.tr(value) + ');');
+  }
+
+  setClipPath(node: string, value: string): void {
+    this.push(node + '.setClipPath(' + quoteJavascriptString(value) + ');');
   }
 
   setDisplay(node: string, value: string): void {

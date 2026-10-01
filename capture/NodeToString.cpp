@@ -42,7 +42,7 @@ static void appendYGValueIfNotDefault(
   }
 }
 
-static void appendEnumValueIfNotDefault(
+static void appendStringIfNotDefault(
     json& j,
     std::string_view key,
     std::string_view value,
@@ -50,6 +50,14 @@ static void appendEnumValueIfNotDefault(
   if (value != defaultValue) {
     j[key] = value;
   }
+}
+
+static void appendEnumValueIfNotDefault(
+    json& j,
+    std::string_view key,
+    std::string_view value,
+    std::string_view defaultValue) {
+  appendStringIfNotDefault(j, key, value, defaultValue);
 }
 
 static void appendBoolIfNotDefault(
@@ -197,6 +205,11 @@ static void serializeTreeImpl(
         "position-type",
         YGPositionTypeToString(YGNodeStyleGetPositionType(node)),
         YGPositionTypeToString(YGNodeStyleGetPositionType(defaultNode.get())));
+    appendStringIfNotDefault(
+        j["style"],
+        "clip-path",
+        YGNodeStyleGetClipPath(node),
+        YGNodeStyleGetClipPath(defaultNode.get()));
 
     appendFloatIfNotDefault(
         j["style"],

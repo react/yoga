@@ -49,7 +49,7 @@ add_link_options(
     # both bundlders and Node.
     "SHELL:-s SINGLE_FILE=1"
     "SHELL:-s ENVIRONMENT='web'"
-    "SHELL:-s EXPORTED_RUNTIME_METHODS=['HEAPF32','HEAP32']"
+    "SHELL:-s EXPORTED_RUNTIME_METHODS=['HEAPF32','HEAP32','ccall']"
     "SHELL:-Wl,--export-dynamic")
 
 add_library(yogaObjLib OBJECT ${YOGA_SOURCES} ${BRIDGE_SOURCES})

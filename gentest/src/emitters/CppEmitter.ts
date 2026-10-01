@@ -9,6 +9,7 @@
 
 import Emitter from './Emitter.ts';
 import type {ValueWithUnit} from '../types.ts';
+import {quoteCppString} from './stringEscaping.ts';
 
 function toValueCpp(value: string | number): string {
   const n = value.toString().replace('px', '').replace('%', '');
@@ -226,6 +227,12 @@ export class CppEmitter extends Emitter {
   setOverflow(node: string, value: string): void {
     this.push(
       'YGNodeStyleSetOverflow(' + node + ', ' + toValueCpp(value) + ');',
+    );
+  }
+
+  setClipPath(node: string, value: string): void {
+    this.push(
+      'YGNodeStyleSetClipPath(' + node + ', ' + quoteCppString(value) + ');',
     );
   }
 

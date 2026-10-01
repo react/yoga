@@ -84,6 +84,7 @@ export type Node = {
   getBorder(edge: Edge): number;
   getChild(index: number): Node;
   getChildCount(): number;
+  getClipPath(): string;
   getComputedBorder(edge: Edge): number;
   getComputedBottom(): number;
   getComputedHadOverflow(): boolean;
@@ -130,6 +131,7 @@ export type Node = {
   setAlignSelf(alignSelf: Align): void;
   setAspectRatio(aspectRatio: number | undefined): void;
   setBorder(edge: Edge, borderWidth: number | undefined): void;
+  setClipPath(clipPath: string | undefined): void;
   setDirection(direction: Direction): void;
   setDisplay(display: Display): void;
   setFlex(flex: number | undefined): void;
@@ -539,6 +541,15 @@ export default function wrapAssembly(lib: any): Yoga {
       lib._YGNodeStyleSetOverflow(this._ptr, overflow);
     }
 
+    setClipPath(clipPath: string | undefined): void {
+      lib.ccall(
+        'YGNodeStyleSetClipPath',
+        null,
+        ['number', 'string'],
+        [this._ptr, clipPath ?? 'none'],
+      );
+    }
+
     setDisplay(display: Display): void {
       lib._YGNodeStyleSetDisplay(this._ptr, display);
     }
@@ -809,6 +820,15 @@ export default function wrapAssembly(lib: any): Yoga {
 
     getOverflow(): Overflow {
       return lib._YGNodeStyleGetOverflow(this._ptr);
+    }
+
+    getClipPath(): string {
+      return lib.ccall(
+        'YGNodeStyleGetClipPath',
+        'string',
+        ['number'],
+        [this._ptr],
+      );
     }
 
     getDisplay(): Display {

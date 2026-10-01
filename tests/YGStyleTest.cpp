@@ -73,3 +73,99 @@ TEST(YogaTest, initialise_flexShrink_flexGrow) {
   ASSERT_EQ(3, YGNodeStyleGetFlexShrink(node0));
   YGNodeFree(node0);
 }
+
+TEST(YogaTest, clip_path_defaults_and_preserves_owned_serialization) {
+  YGNodeRef node = YGNodeNew();
+
+  EXPECT_STREQ("none", YGNodeStyleGetClipPath(node));
+
+  char clipPath[] = "polygon(0 0, 100% 0, 50% 100%) border-box";
+  YGNodeStyleSetClipPath(node, clipPath);
+  clipPath[0] = 'x';
+
+  EXPECT_STREQ(
+      "polygon(0 0, 100% 0, 50% 100%) border-box",
+      YGNodeStyleGetClipPath(node));
+
+  YGNodeFree(node);
+}
+
+TEST(YogaTest, clip_path_is_copied_and_can_be_reset) {
+  YGNodeRef source = YGNodeNew();
+  YGNodeRef destination = YGNodeNew();
+
+  YGNodeStyleSetClipPath(source, "circle(40% at 50% 50%)");
+  YGNodeCopyStyle(destination, source);
+  YGNodeStyleSetClipPath(source, "inset(10px 20px)");
+
+  EXPECT_STREQ("circle(40% at 50% 50%)", YGNodeStyleGetClipPath(destination));
+
+  YGNodeStyleSetClipPath(destination, nullptr);
+  EXPECT_STREQ("none", YGNodeStyleGetClipPath(destination));
+
+  YGNodeStyleSetClipPath(destination, "");
+  EXPECT_STREQ("", YGNodeStyleGetClipPath(destination));
+
+  YGNodeStyleSetClipPath(destination, "none");
+  EXPECT_STREQ("none", YGNodeStyleGetClipPath(destination));
+
+  YGNodeStyleSetClipPath(destination, "circle(25%)");
+  YGNodeReset(destination);
+  EXPECT_STREQ("none", YGNodeStyleGetClipPath(destination));
+
+  YGNodeFree(source);
+  YGNodeFree(destination);
+}
+
+TEST(YogaTest, clip_path_dirties_only_when_its_value_changes) {
+  YGNodeRef node = YGNodeNew();
+  YGNodeStyleSetWidth(node, 100);
+  YGNodeStyleSetHeight(node, 100);
+  YGNodeCalculateLayout(node, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  ASSERT_FALSE(YGNodeIsDirty(node));
+
+  YGNodeStyleSetClipPath(node, "ellipse(25% 40% at 50% 50%)");
+  EXPECT_TRUE(YGNodeIsDirty(node));
+
+  YGNodeCalculateLayout(node, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FALSE(YGNodeIsDirty(node));
+
+  YGNodeStyleSetClipPath(node, "ellipse(25% 40% at 50% 50%)");
+  EXPECT_FALSE(YGNodeIsDirty(node));
+
+  YGNodeFree(node);
+}
+
+TEST(YogaTest, clip_path_does_not_change_layout) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 120);
+  YGNodeStyleSetHeight(root, 80);
+
+  YGNodeRef child = YGNodeNew();
+  YGNodeStyleSetWidth(child, 30);
+  YGNodeStyleSetHeight(child, 20);
+  YGNodeStyleSetMargin(child, YGEdgeLeft, 7);
+  YGNodeInsertChild(root, child, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const float rootWidth = YGNodeLayoutGetWidth(root);
+  const float rootHeight = YGNodeLayoutGetHeight(root);
+  const float childLeft = YGNodeLayoutGetLeft(child);
+  const float childTop = YGNodeLayoutGetTop(child);
+  const float childWidth = YGNodeLayoutGetWidth(child);
+  const float childHeight = YGNodeLayoutGetHeight(child);
+
+  YGNodeStyleSetClipPath(child, "polygon(0 0, 100% 0, 100% 100%, 0 100%)");
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  EXPECT_FLOAT_EQ(rootWidth, YGNodeLayoutGetWidth(root));
+  EXPECT_FLOAT_EQ(rootHeight, YGNodeLayoutGetHeight(root));
+  EXPECT_FLOAT_EQ(childLeft, YGNodeLayoutGetLeft(child));
+  EXPECT_FLOAT_EQ(childTop, YGNodeLayoutGetTop(child));
+  EXPECT_FLOAT_EQ(childWidth, YGNodeLayoutGetWidth(child));
+  EXPECT_FLOAT_EQ(childHeight, YGNodeLayoutGetHeight(child));
+
+  YGNodeFreeRecursive(root);
+}

@@ -276,6 +276,12 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
       )
     }
 
+  override var clipPath: String
+    get() = YogaNative.jni_YGNodeStyleGetClipPathJNI(nativePointer)
+    set(value) {
+      YogaNative.jni_YGNodeStyleSetClipPathJNI(nativePointer, value)
+    }
+
   override var flex: Float
     get() = YogaNative.jni_YGNodeStyleGetFlexJNI(nativePointer)
     set(value) {

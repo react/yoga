@@ -15,6 +15,7 @@ export type LayoutMetrics = {
   left: number;
   width: number;
   height: number;
+  clipPath?: string;
   overflow?: 'visible' | 'hidden' | 'scroll';
   display?: 'flex' | 'none' | 'contents';
   children?: LayoutMetrics[];
@@ -46,6 +47,7 @@ export default function LayoutBox({metrics, depth, className}: Props) {
         left: style.left,
         width: style.width,
         height: style.height,
+        clipPath: style.clipPath,
         overflow: style.overflow,
         position: depth === 0 ? 'relative' : 'absolute',
       }}>

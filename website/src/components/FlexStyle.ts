@@ -58,6 +58,7 @@ export type FlexStyle = {
   borderBlockWidth?: number;
   bottom?: number | `${number}%`;
   boxSizing?: 'border-box' | 'content-box';
+  clipPath?: string;
   direction?: 'ltr' | 'rtl';
   display?: 'none' | 'flex' | 'contents';
   end?: number | `${number}%`;
@@ -154,6 +155,9 @@ export function applyStyle(node: YogaNode, style: FlexStyle = {}): void {
           break;
         case 'boxSizing':
           node.setBoxSizing(boxSizing(style.boxSizing));
+          break;
+        case 'clipPath':
+          node.setClipPath(style.clipPath);
           break;
         case 'direction':
           node.setDirection(direction(style.direction));

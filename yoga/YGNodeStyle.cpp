@@ -8,7 +8,10 @@
 #include <yoga/Yoga.h>
 #include <yoga/debug/AssertFatal.h>
 #include <yoga/node/Node.h>
+#include <yoga/style/ClipPath.h>
 #include <yoga/style/GridTrack.h>
+
+#include <utility>
 
 using namespace facebook;
 using namespace facebook::yoga;
@@ -19,7 +22,7 @@ template <auto GetterT, auto SetterT, typename ValueT>
 void updateStyle(YGNodeRef node, ValueT value) {
   auto& style = resolveRef(node)->style();
   if ((style.*GetterT)() != value) {
-    (style.*SetterT)(value);
+    (style.*SetterT)(std::move(value));
     resolveRef(node)->markDirtyAndPropagate();
   }
 }
@@ -166,6 +169,14 @@ void YGNodeStyleSetDisplay(const YGNodeRef node, const YGDisplay display) {
 
 YGDisplay YGNodeStyleGetDisplay(const YGNodeConstRef node) {
   return unscopedEnum(resolveRef(node)->style().display());
+}
+
+void YGNodeStyleSetClipPath(YGNodeRef node, const char* clipPath) {
+  updateStyle<&Style::clipPath, &Style::setClipPath>(node, ClipPath{clipPath});
+}
+
+const char* YGNodeStyleGetClipPath(YGNodeConstRef node) {
+  return resolveRef(node)->style().clipPath().c_str();
 }
 
 void YGNodeStyleSetFlex(const YGNodeRef node, const float flex) {

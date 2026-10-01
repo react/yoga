@@ -175,6 +175,13 @@ public interface YogaProps {
 
   public var boxSizing: YogaBoxSizing
 
+  /**
+   * The serialized CSS `clip-path` value associated with this node.
+   *
+   * Yoga preserves this paint-only value for host renderers; it does not affect layout.
+   */
+  public var clipPath: String
+
   /* Read-only properties - getter only, or setter has different type/name */
 
   public val styleDirection: YogaDirection

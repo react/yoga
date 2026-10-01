@@ -12,6 +12,49 @@ import type {ParsedStyles, ValueWithUnit} from './types.ts';
 
 const INVISIBLE_BORDER_STYLES = new Set(['none', 'initial']);
 
+function splitDeclarations(styleAttr: string): string[] {
+  const declarations: string[] = [];
+  let declarationStart = 0;
+  let parenthesisDepth = 0;
+  let quote: "'" | '"' | null = null;
+  let escaped = false;
+
+  for (let i = 0; i < styleAttr.length; i++) {
+    const character = styleAttr[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (character === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (quote != null) {
+      if (character === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"') {
+      quote = character;
+    } else if (character === '(') {
+      parenthesisDepth++;
+    } else if (character === ')' && parenthesisDepth > 0) {
+      parenthesisDepth--;
+    } else if (character === ';' && parenthesisDepth === 0) {
+      declarations.push(styleAttr.slice(declarationStart, i));
+      declarationStart = i + 1;
+    }
+  }
+
+  declarations.push(styleAttr.slice(declarationStart));
+  return declarations;
+}
+
 /**
  * Parse a raw inline style attribute string into a Map of property → value.
  * Expands common shorthands used in fixtures so individual longhand
@@ -21,7 +64,7 @@ export function parseStyleAttribute(styleAttr: string): ParsedStyles {
   const styles: ParsedStyles = new Map();
   if (!styleAttr) return styles;
 
-  const declarations = styleAttr.split(';');
+  const declarations = splitDeclarations(styleAttr);
   for (const decl of declarations) {
     const trimmed = decl.trim();
     if (!trimmed) continue;
@@ -145,6 +188,12 @@ export function applyStyles(
       case 'overflow':
         if (value !== 'visible') {
           emitter.setOverflow(nodeName, overflowValue(value));
+        }
+        break;
+
+      case 'clip-path':
+        if (value !== 'none') {
+          emitter.setClipPath(nodeName, value);
         }
         break;
 

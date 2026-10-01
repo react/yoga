@@ -133,6 +133,11 @@ public object YogaNative {
 
   @JvmStatic public external fun jni_YGNodeStyleSetDisplayJNI(nativePointer: Long, display: Int)
 
+  @JvmStatic public external fun jni_YGNodeStyleGetClipPathJNI(nativePointer: Long): String
+
+  @JvmStatic
+  public external fun jni_YGNodeStyleSetClipPathJNI(nativePointer: Long, clipPath: String)
+
   @JvmStatic public external fun jni_YGNodeStyleGetFlexJNI(nativePointer: Long): Float
 
   @JvmStatic public external fun jni_YGNodeStyleSetFlexJNI(nativePointer: Long, flex: Float)

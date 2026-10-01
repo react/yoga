@@ -1,0 +1,35 @@
+<div
+  id="clip_path_circle_does_not_affect_layout"
+  style="width: 120px; height: 80px; clip-path: circle(35% at 50% 40%)">
+  <div style="width: 160px; height: 30px"></div>
+</div>
+
+<div
+  id="clip_path_polygon_does_not_affect_layout"
+  style="
+    width: 100px;
+    height: 100px;
+    clip-path: polygon(evenodd, 0 0, 100% 0, 50% 100%);
+  ">
+  <div style="width: 40px; height: 125px"></div>
+</div>
+
+<div
+  id="clip_path_quoted_path_does_not_affect_layout"
+  style="
+    width: 140px;
+    height: 90px;
+    clip-path: path('M 0 0 H 140 V 90 H 0 Z') border-box;
+  ">
+  <div style="width: 175px; height: 45px"></div>
+</div>
+
+<div
+  id="clip_path_data_url_with_semicolon_does_not_affect_layout"
+  style="
+    width: 110px;
+    height: 70px;
+    clip-path: url('data:image/svg+xml;utf8,%3Csvg%3E%3CclipPath%20id%3D%22clip%22/%3E%3C/svg%3E#clip');
+  ">
+  <div style="width: 135px; height: 35px"></div>
+</div>

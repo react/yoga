@@ -139,6 +139,8 @@ void setStylesFromJson(const json& j, YGNodeRef node) {
       YGNodeStyleSetDisplay(node, displayFromString(value));
     } else if (key == "position-type") {
       YGNodeStyleSetPositionType(node, positionTypeFromString(value));
+    } else if (key == "clip-path") {
+      YGNodeStyleSetClipPath(node, value.get_ref<const std::string&>().c_str());
     } else if (key == "flex-grow") {
       YGNodeStyleSetFlexGrow(node, value);
     } else if (key == "flex-shrink") {

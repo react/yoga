@@ -41,6 +41,10 @@ A style value may be set against multiple Edge values at once, with precedence g
 
 Yoga does not operate on CSS units like `px` or `em`. Yoga instead works on "points", representing an arbitrary, canonical absolute unit (usually mapped to display independent pixels), along with percentage. Other units should be absolutized before being given to Yoga.
 
+## Renderer metadata
+
+Yoga can also preserve [`clip-path`](./clip-path.mdx) style metadata for a host renderer. This value does not participate in layout, because Yoga calculates box geometry and does not draw content.
+
 ## Non-standard properties
 
 Yoga's `aspect-ratio` property was added before the same property was added to CSS, and may act subtlety different. These differences may be reconciled in a future version of Yoga.

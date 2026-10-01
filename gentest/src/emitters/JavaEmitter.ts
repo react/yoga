@@ -9,6 +9,7 @@
 
 import Emitter from './Emitter.ts';
 import type {ValueWithUnit} from '../types.ts';
+import {quoteJavaString} from './stringEscaping.ts';
 
 function toValueJava(value: string | number): string {
   const n = value.toString().replace('px', '').replace('%', '');
@@ -294,6 +295,10 @@ export class JavaEmitter extends Emitter {
 
   setOverflow(node: string, value: string): void {
     this.push(node + '.setOverflow(' + this.tr(value) + ');');
+  }
+
+  setClipPath(node: string, value: string): void {
+    this.push(node + '.setClipPath(' + quoteJavaString(value) + ');');
   }
 
   setDisplay(node: string, value: string): void {

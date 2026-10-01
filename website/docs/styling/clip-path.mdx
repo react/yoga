@@ -1,0 +1,52 @@
+---
+sidebar_position: 15
+---
+
+import Playground from '@site/src/components/Playground';
+
+# Clip Path
+
+The `clipPath` style stores a serialized CSS [`clip-path`](https://www.w3.org/TR/css-masking-1/#the-clip-path) value on a Yoga node. Its default value is `none`.
+
+Clipping is a paint operation: it changes which pixels are visible, but not the size or position that Yoga calculates. Yoga therefore owns, copies, and exposes the value without parsing it or changing layout. A host renderer must read the value and apply it using its own clipping facilities. The web playground does this by forwarding the value returned by Yoga to the browser.
+
+Changing the value uses Yoga's normal style invalidation, so the node is marked dirty and host integrations can schedule layout and repaint work. Reapplying the same serialized value is a no-op, and recalculation leaves the node's box geometry unchanged.
+
+Values are kept intact, so renderers may support any syntax they understand, including basic shapes such as `circle()`, `ellipse()`, `inset()`, and `polygon()`, as well as `path()` and `url()`. Invalid or unsupported values also round-trip intact and are handled by the renderer according to its own rules.
+
+<Playground code={`<Layout config={{useWebDefaults: false}}>
+  <Node
+    style={{
+      width: 240,
+      height: 180,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+    <Node
+      style={{
+        width: 150,
+        height: 150,
+        clipPath:
+          'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+      }}
+    />
+  </Node>
+</Layout>`} />
+
+In JavaScript:
+
+```js
+node.setClipPath('circle(40% at 50% 50%)');
+node.getClipPath(); // 'circle(40% at 50% 50%)'
+node.setClipPath('none');
+```
+
+The C API follows the same contract:
+
+```c
+YGNodeStyleSetClipPath(node, "inset(10% 20% round 12px)");
+const char* clipPath = YGNodeStyleGetClipPath(node);
+```
+
+The returned C string is borrowed from the node and remains valid until that node's style is mutated or the node is freed.

@@ -60,6 +60,22 @@ YG_EXPORT YGOverflow YGNodeStyleGetOverflow(YGNodeConstRef node);
 YG_EXPORT void YGNodeStyleSetDisplay(YGNodeRef node, YGDisplay display);
 YG_EXPORT YGDisplay YGNodeStyleGetDisplay(YGNodeConstRef node);
 
+/**
+ * Stores an opaque, serialized CSS `clip-path` value on the node.
+ *
+ * Yoga owns a copy of `clipPath` but does not parse it or use it for layout.
+ * Passing a null pointer resets the value to the CSS initial value, `none`.
+ */
+YG_EXPORT void YGNodeStyleSetClipPath(YGNodeRef node, const char* clipPath);
+
+/**
+ * Returns the serialized CSS `clip-path` value, or `none` by default.
+ *
+ * The returned pointer is borrowed from the node and remains valid until the
+ * node is freed or its style is next mutated.
+ */
+YG_EXPORT const char* YGNodeStyleGetClipPath(YGNodeConstRef node);
+
 YG_EXPORT void YGNodeStyleSetFlex(YGNodeRef node, float flex);
 YG_EXPORT float YGNodeStyleGetFlex(YGNodeConstRef node);
 

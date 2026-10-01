@@ -104,6 +104,7 @@ export default abstract class Emitter {
   abstract setPositionType(node: string, value: string): void;
   abstract setFlexWrap(node: string, value: string): void;
   abstract setOverflow(node: string, value: string): void;
+  abstract setClipPath(node: string, value: string): void;
   abstract setDisplay(node: string, value: string): void;
   abstract setBoxSizing(node: string, value: string): void;
   abstract setFlexGrow(node: string, value: string): void;

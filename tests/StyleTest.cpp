@@ -45,4 +45,20 @@ TEST(Style, computed_margin_is_not_floored) {
   ASSERT_EQ(marginStart, -1.0f);
 }
 
+TEST(Style, clip_path_uses_semantic_value_equality) {
+  Style defaultStyle;
+  Style explicitNoneStyle;
+  explicitNoneStyle.setClipPath(ClipPath{"none"});
+  EXPECT_EQ(defaultStyle, explicitNoneStyle);
+
+  Style first;
+  Style second;
+  first.setClipPath(ClipPath{"circle(50%)"});
+  second.setClipPath(ClipPath{"circle(50%)"});
+  EXPECT_EQ(first, second);
+
+  second.setClipPath(ClipPath{"circle(40%)"});
+  EXPECT_NE(first, second);
+}
+
 } // namespace facebook::yoga

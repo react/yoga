@@ -103,6 +103,7 @@ function metricsFromYogaNode(node: YogaNode): LayoutMetrics {
     left: node.getComputedLeft() - parentBorderThickness,
     width: node.getComputedWidth(),
     height: node.getComputedHeight(),
+    clipPath: node.getClipPath(),
     overflow: (() => {
       switch (node.getOverflow()) {
         case Overflow.Hidden:

@@ -277,6 +277,48 @@ class YogaNodeStylePropertiesTest {
   }
 
   @Test
+  fun testClipPathDefault() {
+    val node = createNode()
+
+    assertEquals("none", node.clipPath)
+  }
+
+  @Test
+  fun testClipPathRoundTripsCssValues() {
+    val node = createNode()
+    val clipPaths =
+        listOf(
+            "inset(10% 20% round 8px)",
+            "circle(40% at 50% 50%)",
+            "ellipse(25% 40% at 50% 60%) border-box",
+            "polygon(0 0, 100% 0, 50% 100%)",
+            "url(\"#avatar-clip\")",
+            "url(\"https://example.test/形/🧘.svg#clip\")",
+        )
+
+    for (clipPath in clipPaths) {
+      node.clipPath = clipPath
+      assertEquals(clipPath, node.clipPath)
+    }
+  }
+
+  @Test
+  fun testClipPathCopiesAndResets() {
+    val source = createNode()
+    val destination = createNode()
+    val clipPath = "polygon(0 0, 100% 0, 50% 100%)"
+
+    source.clipPath = clipPath
+    destination.copyStyle(source)
+    source.clipPath = "circle(25%)"
+
+    assertEquals(clipPath, destination.clipPath)
+
+    destination.reset()
+    assertEquals("none", destination.clipPath)
+  }
+
+  @Test
   fun testFlexAffectsLayoutGrowing() {
     val node = style().height(200f).children(style().height(100f).flex(1.25f)).node()
     node.calculateLayout(UNDEFINED, UNDEFINED)

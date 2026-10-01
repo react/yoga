@@ -10,7 +10,9 @@
 #include <bit>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <memory>
+#include <string>
 #include "LayoutContext.h"
 #include "YGJNI.h"
 #include "YGJTypesVanilla.h"
@@ -504,6 +506,124 @@ YG_NODE_JNI_STYLE_PROP(jint, YGBoxSizing, BoxSizing);
 YG_NODE_JNI_STYLE_PROP(jint, YGWrap, FlexWrap);
 YG_NODE_JNI_STYLE_PROP(jint, YGOverflow, Overflow);
 YG_NODE_JNI_STYLE_PROP(jint, YGDisplay, Display);
+
+static ScopedLocalRef<jobject> getUtf8Charset(JNIEnv* env) {
+  auto standardCharsetsClass =
+      make_local_ref(env, env->FindClass("java/nio/charset/StandardCharsets"));
+  if (!standardCharsetsClass) {
+    return make_local_ref(env, static_cast<jobject>(nullptr));
+  }
+
+  static const jfieldID utf8Field = env->GetStaticFieldID(
+      standardCharsetsClass.get(), "UTF_8", "Ljava/nio/charset/Charset;");
+  if (utf8Field == nullptr) {
+    return make_local_ref(env, static_cast<jobject>(nullptr));
+  }
+
+  return make_local_ref(
+      env, env->GetStaticObjectField(standardCharsetsClass.get(), utf8Field));
+}
+
+static jstring jni_YGNodeStyleGetClipPathJNI(
+    JNIEnv* env,
+    jobject /*obj*/,
+    jlong nativePointer) {
+  const char* clipPath =
+      YGNodeStyleGetClipPath(_jlong2YGNodeRef(nativePointer));
+  if (clipPath == nullptr) {
+    clipPath = "none";
+  }
+
+  const size_t length = std::strlen(clipPath);
+  if (length > static_cast<size_t>(std::numeric_limits<jsize>::max())) {
+    auto exceptionClass =
+        make_local_ref(env, env->FindClass("java/lang/IllegalStateException"));
+    if (exceptionClass) {
+      env->ThrowNew(
+          exceptionClass.get(), "clipPath is too large for a Java String");
+    }
+    return nullptr;
+  }
+
+  auto utf8Bytes =
+      make_local_ref(env, env->NewByteArray(static_cast<jsize>(length)));
+  if (!utf8Bytes) {
+    return nullptr;
+  }
+  env->SetByteArrayRegion(
+      utf8Bytes.get(),
+      0,
+      static_cast<jsize>(length),
+      reinterpret_cast<const jbyte*>(clipPath));
+  if (env->ExceptionCheck()) {
+    return nullptr;
+  }
+
+  auto utf8Charset = getUtf8Charset(env);
+  if (!utf8Charset) {
+    return nullptr;
+  }
+  auto stringClass = make_local_ref(env, env->FindClass("java/lang/String"));
+  if (!stringClass) {
+    return nullptr;
+  }
+  static const jmethodID constructor = getMethodId(
+      env, stringClass.get(), "<init>", "([BLjava/nio/charset/Charset;)V");
+  std::array<jvalue, 2> constructorArgs{};
+  constructorArgs[0].l = utf8Bytes.get();
+  constructorArgs[1].l = utf8Charset.get();
+  return static_cast<jstring>(
+      env->NewObjectA(stringClass.get(), constructor, constructorArgs.data()));
+}
+
+static void jni_YGNodeStyleSetClipPathJNI(
+    JNIEnv* env,
+    jobject /*obj*/,
+    jlong nativePointer,
+    jstring clipPath) {
+  if (clipPath == nullptr) {
+    auto exceptionClass =
+        make_local_ref(env, env->FindClass("java/lang/NullPointerException"));
+    if (exceptionClass) {
+      env->ThrowNew(exceptionClass.get(), "clipPath must not be null");
+    }
+    return;
+  }
+
+  auto utf8Charset = getUtf8Charset(env);
+  if (!utf8Charset) {
+    return;
+  }
+  auto stringClass = make_local_ref(env, env->FindClass("java/lang/String"));
+  if (!stringClass) {
+    return;
+  }
+  static const jmethodID getBytes = getMethodId(
+      env, stringClass.get(), "getBytes", "(Ljava/nio/charset/Charset;)[B");
+  std::array<jvalue, 1> getBytesArgs{};
+  getBytesArgs[0].l = utf8Charset.get();
+  auto utf8Bytes = make_local_ref(
+      env,
+      static_cast<jbyteArray>(
+          env->CallObjectMethodA(clipPath, getBytes, getBytesArgs.data())));
+  if (!utf8Bytes || env->ExceptionCheck()) {
+    return;
+  }
+
+  const jsize length = env->GetArrayLength(utf8Bytes.get());
+  std::string utf8ClipPath(static_cast<size_t>(length), '\0');
+  env->GetByteArrayRegion(
+      utf8Bytes.get(),
+      0,
+      length,
+      reinterpret_cast<jbyte*>(utf8ClipPath.data()));
+  if (env->ExceptionCheck()) {
+    return;
+  }
+
+  YGNodeStyleSetClipPath(_jlong2YGNodeRef(nativePointer), utf8ClipPath.c_str());
+}
+
 YG_NODE_JNI_STYLE_PROP(jfloat, float, Flex);
 YG_NODE_JNI_STYLE_PROP(jfloat, float, FlexGrow);
 YG_NODE_JNI_STYLE_PROP(jfloat, float, FlexShrink);
@@ -947,6 +1067,12 @@ static JNINativeMethod methods[] = {
     {"jni_YGNodeStyleSetDisplayJNI",
      "(JI)V",
      (void*)jni_YGNodeStyleSetDisplayJNI},
+    {"jni_YGNodeStyleGetClipPathJNI",
+     "(J)Ljava/lang/String;",
+     (void*)jni_YGNodeStyleGetClipPathJNI},
+    {"jni_YGNodeStyleSetClipPathJNI",
+     "(JLjava/lang/String;)V",
+     (void*)jni_YGNodeStyleSetClipPathJNI},
     {"jni_YGNodeStyleGetFlexJNI", "(J)F", (void*)jni_YGNodeStyleGetFlexJNI},
     {"jni_YGNodeStyleSetFlexJNI", "(JF)V", (void*)jni_YGNodeStyleSetFlexJNI},
     {"jni_YGNodeStyleGetFlexGrowJNI",

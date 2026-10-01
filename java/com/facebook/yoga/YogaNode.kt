@@ -80,6 +80,8 @@ public abstract class YogaNode : YogaProps {
 
   public abstract var display: YogaDisplay?
 
+  abstract override var clipPath: String
+
   abstract override var flex: Float
 
   abstract override var flexGrow: Float
