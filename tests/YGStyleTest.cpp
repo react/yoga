@@ -51,6 +51,18 @@ TEST(YogaTest, copy_style_modified_same) {
   YGNodeFree(node1);
 }
 
+TEST(YogaTest, copy_style_box_sizing) {
+  YGNodeRef node0 = YGNodeNew();
+  YGNodeRef node1 = YGNodeNew();
+  YGNodeStyleSetBoxSizing(node1, YGBoxSizingContentBox);
+
+  YGNodeCopyStyle(node0, node1);
+  ASSERT_EQ(YGBoxSizingContentBox, YGNodeStyleGetBoxSizing(node0));
+
+  YGNodeFree(node0);
+  YGNodeFree(node1);
+}
+
 TEST(YogaTest, initialise_flexShrink_flexGrow) {
   YGNodeRef node0 = YGNodeNew();
   YGNodeStyleSetFlexShrink(node0, 1);
