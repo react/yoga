@@ -10,7 +10,7 @@
 #include <memory>
 
 #include <yoga/style/GridLine.h>
-#include <yoga/style/GridTrack.h>
+#include <yoga/style/GridTrackSize.h>
 
 namespace facebook::yoga {
 
