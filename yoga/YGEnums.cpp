@@ -121,6 +121,8 @@ const char* YGErrataToString(const YGErrata value) {
       return "min-size-undefined-instead-of-auto";
     case YGErrataFlexFirstPassUsesRunningTotals:
       return "flex-first-pass-uses-running-totals";
+    case YGErrataFlexItemPercentMinMaxAgainstOwner:
+      return "flex-item-percent-min-max-against-owner";
     case YGErrataAll:
       return "all";
     case YGErrataClassic:
