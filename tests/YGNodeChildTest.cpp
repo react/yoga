@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <stdexcept>
+
 #include <gtest/gtest.h>
 #include <yoga/Yoga.h>
 
@@ -64,5 +66,45 @@ TEST(YogaTest, removed_child_can_be_reused_with_valid_layout) {
   ASSERT_EQ(100, YGNodeLayoutGetHeight(child));
   ASSERT_FALSE(YGNodeIsDirty(child));
 
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, swap_child_with_out_of_bounds_index_is_rejected) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeRef child = YGNodeNew();
+  YGNodeInsertChild(root, child, 0);
+
+  // Replacing an existing index works.
+  YGNodeRef replacement = YGNodeNew();
+  YGNodeSwapChild(root, replacement, 0);
+  ASSERT_EQ(replacement, YGNodeGetChild(root, 0));
+
+  // An index past the last child is rejected rather than reading and writing
+  // out of bounds on the underlying children vector.
+  YGNodeRef stray = YGNodeNew();
+  ASSERT_THROW(YGNodeSwapChild(root, stray, 1), std::logic_error);
+
+  YGNodeFree(stray);
+  YGNodeFree(child);
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, insert_child_with_out_of_bounds_index_is_rejected) {
+  YGNodeRef root = YGNodeNew();
+
+  YGNodeRef first = YGNodeNew();
+  YGNodeInsertChild(root, first, 0);
+
+  // Appending at the end (index == child count) is allowed.
+  YGNodeRef second = YGNodeNew();
+  YGNodeInsertChild(root, second, 1);
+  ASSERT_EQ(2u, YGNodeGetChildCount(root));
+
+  // An index beyond the end is rejected rather than constructing an invalid
+  // iterator into the children vector.
+  YGNodeRef stray = YGNodeNew();
+  ASSERT_THROW(YGNodeInsertChild(root, stray, 5), std::logic_error);
+
+  YGNodeFree(stray);
   YGNodeFreeRecursive(root);
 }
