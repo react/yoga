@@ -257,6 +257,7 @@ static void computeFlexBasisForChild(
 
   const FloatOptional resolvedFlexBasis = child->resolveFlexBasis(
       direction, mainAxis, mainAxisOwnerSize, ownerWidth);
+  const bool flexBasisIsMaxContent = child->processFlexBasis().isMaxContent();
   const bool isRowStyleDimDefined =
       child->hasDefiniteLength(Dimension::Width, ownerWidth);
   const bool isColumnStyleDimDefined =
@@ -279,7 +280,7 @@ static void computeFlexBasisForChild(
       child->setLayoutComputedFlexBasis(
           yoga::maxOrDefined(resolvedFlexBasis, paddingAndBorder));
     }
-  } else if (isMainAxisRow && isRowStyleDimDefined) {
+  } else if (isMainAxisRow && isRowStyleDimDefined && !flexBasisIsMaxContent) {
     // The width is definite, so use that as the flex basis.
     const FloatOptional paddingAndBorder =
         FloatOptional(paddingAndBorderForAxis(
@@ -290,7 +291,8 @@ static void computeFlexBasisForChild(
             child->getResolvedDimension(
                 direction, Dimension::Width, ownerWidth, ownerWidth),
             paddingAndBorder));
-  } else if (!isMainAxisRow && isColumnStyleDimDefined) {
+  } else if (
+      !isMainAxisRow && isColumnStyleDimDefined && !flexBasisIsMaxContent) {
     // The height is definite, so use that as the flex basis.
     const FloatOptional paddingAndBorder =
         FloatOptional(paddingAndBorderForAxis(
@@ -381,8 +383,16 @@ static void computeFlexBasisForChild(
       }
     }
 
+    const bool childWidthIsMaxContent =
+        child->getProcessedDimension(Dimension::Width).isMaxContent() ||
+        (isMainAxisRow && flexBasisIsMaxContent);
+    const bool childHeightIsMaxContent =
+        child->getProcessedDimension(Dimension::Height).isMaxContent() ||
+        (!isMainAxisRow && flexBasisIsMaxContent);
+
     // If child has no defined size in the cross axis and is set to stretch, set
     // the cross axis to be measured exactly with the available inner width
+    // Prevent stretching if child has max-content sizing in axis
 
     const bool hasExactWidth =
         yoga::isDefined(width) && widthMode == SizingMode::StretchFit;
@@ -390,7 +400,7 @@ static void computeFlexBasisForChild(
         resolveChildAlignment(node, child) == Align::Stretch &&
         childWidthSizingMode != SizingMode::StretchFit;
     if (!isMainAxisRow && !isRowStyleDimDefined && hasExactWidth &&
-        childWidthStretch) {
+        childWidthStretch && !childWidthIsMaxContent) {
       childWidth = width;
       childWidthSizingMode = SizingMode::StretchFit;
       if (childStyle.aspectRatio().isDefined()) {
@@ -406,7 +416,7 @@ static void computeFlexBasisForChild(
         resolveChildAlignment(node, child) == Align::Stretch &&
         childHeightSizingMode != SizingMode::StretchFit;
     if (isMainAxisRow && !isColumnStyleDimDefined && hasExactHeight &&
-        childHeightStretch) {
+        childHeightStretch && !childHeightIsMaxContent) {
       childHeight = height;
       childHeightSizingMode = SizingMode::StretchFit;
 
@@ -415,6 +425,15 @@ static void computeFlexBasisForChild(
             (childHeight - marginColumn) * childStyle.aspectRatio().unwrap();
         childWidthSizingMode = SizingMode::StretchFit;
       }
+    }
+
+    if (childWidthIsMaxContent) {
+      childWidth = YGUndefined;
+      childWidthSizingMode = SizingMode::MaxContent;
+    }
+    if (childHeightIsMaxContent) {
+      childHeight = YGUndefined;
+      childHeightSizingMode = SizingMode::MaxContent;
     }
 
     constrainMaxSizeForMode(
@@ -1161,7 +1180,33 @@ static float distributeFreeSpaceSecondPass(
     SizingMode childMainSizingMode = SizingMode::StretchFit;
 
     const auto& childStyle = currentLineChild->style();
-    if (childStyle.aspectRatio().isDefined()) {
+    const bool childCrossIsMaxContent =
+        currentLineChild->getProcessedDimension(dimension(crossAxis))
+            .isMaxContent();
+    if (childCrossIsMaxContent) {
+      // A max-content cross size resolves to the box's measured max-content
+      // size, regardless of available space or stretch alignment. Measure
+      // first, then lay out below with the result as a definite size, so
+      // descendants resolve percentages against the resolved size.
+      calculateLayoutInternal(
+          currentLineChild,
+          isMainAxisRow ? childMainSize : YGUndefined,
+          isMainAxisRow ? YGUndefined : childMainSize,
+          direction,
+          isMainAxisRow ? SizingMode::StretchFit : SizingMode::MaxContent,
+          isMainAxisRow ? SizingMode::MaxContent : SizingMode::StretchFit,
+          availableInnerWidth,
+          availableInnerHeight,
+          false,
+          LayoutPassReason::kFlexMeasure,
+          layoutMarkerData,
+          depth,
+          generationCount);
+      childCrossSize = currentLineChild->getLayout().measuredDimension(
+                           dimension(crossAxis)) +
+          marginCross;
+      childCrossSizingMode = SizingMode::StretchFit;
+    } else if (childStyle.aspectRatio().isDefined()) {
       childCrossSize = isMainAxisRow
           ? (childMainSize - marginMain) / childStyle.aspectRatio().unwrap()
           : (childMainSize - marginMain) * childStyle.aspectRatio().unwrap();
@@ -1222,7 +1267,7 @@ static float distributeFreeSpaceSecondPass(
         &childCrossSizingMode,
         &childCrossSize);
 
-    const bool requiresStretchLayout =
+    const bool requiresStretchLayout = !childCrossIsMaxContent &&
         !currentLineChild->hasDefiniteLength(
             dimension(crossAxis), availableInnerCrossDim) &&
         resolveChildAlignment(node, currentLineChild) == Align::Stretch &&
@@ -2178,10 +2223,12 @@ static void calculateLayoutImpl(
         if (alignItem == Align::Stretch &&
             !child->style().flexStartMarginIsAuto(crossAxis, direction) &&
             !child->style().flexEndMarginIsAuto(crossAxis, direction)) {
-          // If the child defines a definite size for its cross axis, there's
-          // no need to stretch.
+          // If the child defines a definite size for its cross axis, or asks
+          // for its max-content size there, there's no need to stretch.
           if (!child->hasDefiniteLength(
-                  dimension(crossAxis), availableInnerCrossDim)) {
+                  dimension(crossAxis), availableInnerCrossDim) &&
+              !child->getProcessedDimension(dimension(crossAxis))
+                   .isMaxContent()) {
             float childMainSize =
                 child->getLayout().measuredDimension(dimension(mainAxis));
             const auto& childStyle = child->style();
@@ -2447,9 +2494,12 @@ static void calculateLayoutImpl(
                   flexStartEdge(crossAxis));
 
               // Remeasure child with the line height as it as been only
-              // measured with the owners height yet.
+              // measured with the owners height yet. Skip children asking
+              // for their max-content size: they never stretch to the line.
               if (!child->hasDefiniteLength(
-                      dimension(crossAxis), availableInnerCrossDim)) {
+                      dimension(crossAxis), availableInnerCrossDim) &&
+                  !child->getProcessedDimension(dimension(crossAxis))
+                       .isMaxContent()) {
                 const float childWidth = isMainAxisRow
                     ? (child->getLayout().measuredDimension(Dimension::Width) +
                        child->style().computeMarginForAxis(
@@ -2885,10 +2935,18 @@ void calculateLayout(
       gCurrentGenerationCount.fetch_add(1, std::memory_order_relaxed) + 1;
   node->processDimensions();
   const Direction direction = node->resolveDirection(ownerDirection);
+  const bool rootWidthIsMaxContent =
+      node->getProcessedDimension(Dimension::Width).isMaxContent();
+  const bool rootHeightIsMaxContent =
+      node->getProcessedDimension(Dimension::Height).isMaxContent();
+
   float width = YGUndefined;
   SizingMode widthSizingMode = SizingMode::MaxContent;
   const auto& style = node->style();
-  if (node->hasDefiniteLength(Dimension::Width, ownerWidth)) {
+  if (rootWidthIsMaxContent) {
+    width = YGUndefined;
+    widthSizingMode = SizingMode::MaxContent;
+  } else if (node->hasDefiniteLength(Dimension::Width, ownerWidth)) {
     width =
         (node->getResolvedDimension(
                  direction,
@@ -2915,7 +2973,10 @@ void calculateLayout(
 
   float height = YGUndefined;
   SizingMode heightSizingMode = SizingMode::MaxContent;
-  if (node->hasDefiniteLength(Dimension::Height, ownerHeight)) {
+  if (rootHeightIsMaxContent) {
+    height = YGUndefined;
+    heightSizingMode = SizingMode::MaxContent;
+  } else if (node->hasDefiniteLength(Dimension::Height, ownerHeight)) {
     height =
         (node->getResolvedDimension(
                  direction,
@@ -2944,6 +3005,58 @@ void calculateLayout(
           ExperimentalFeature::FixFlexBasisFitContent)
       ? currentGenerationCount
       : gCurrentGenerationCount.load(std::memory_order_relaxed);
+
+  // A max-content root is measured first, then laid out at the measured, min/max clamped size, so
+  // descendants resolve percentages against it and wrap within it.
+  if (rootWidthIsMaxContent || rootHeightIsMaxContent) {
+    calculateLayoutInternal(
+        node,
+        width,
+        height,
+        ownerDirection,
+        widthSizingMode,
+        heightSizingMode,
+        ownerWidth,
+        ownerHeight,
+        false,
+        LayoutPassReason::kMeasureChild,
+        markerData,
+        0, // tree root
+        generationCount);
+    if (rootWidthIsMaxContent) {
+      width = node->getLayout().measuredDimension(Dimension::Width) +
+          style.computeMarginForAxis(FlexDirection::Row, ownerWidth);
+      widthSizingMode = SizingMode::StretchFit;
+      // width: max-content; height: max-content; max-width: 100,
+      // A min/max clamp on the width changes wrapping, and with it the
+      // content height. Re-measure the height at the resolved width before
+      // freezing it
+      if (rootHeightIsMaxContent &&
+          (style.minDimension(Dimension::Width).isDefined() ||
+           style.maxDimension(Dimension::Width).isDefined())) {
+        calculateLayoutInternal(
+            node,
+            width,
+            height,
+            ownerDirection,
+            widthSizingMode,
+            heightSizingMode,
+            ownerWidth,
+            ownerHeight,
+            false,
+            LayoutPassReason::kMeasureChild,
+            markerData,
+            0, // tree root
+            generationCount);
+      }
+    }
+    if (rootHeightIsMaxContent) {
+      height = node->getLayout().measuredDimension(Dimension::Height) +
+          style.computeMarginForAxis(FlexDirection::Column, ownerWidth);
+      heightSizingMode = SizingMode::StretchFit;
+    }
+  }
+
   if (calculateLayoutInternal(
           node,
           width,

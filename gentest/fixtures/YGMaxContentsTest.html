@@ -1,0 +1,136 @@
+<div id="max_content_width_with_text" style="width: 200px; height: 200px;">
+  <div style="width: max-content;">
+    <div style="flex-direction: row;">
+      Lorem ipsum sdafhasdfkjlasdhlkajsfhasldkfhasdlkahsdflkjasdhflaksdfasdlkjhasdlfjahsdfljkasdhalsdfhas dolor sit amet
+    </div>
+  </div>
+</div>
+
+<div id="max_content_width_does_not_wrap" style="width: 100px; height: 200px;">
+  <div style="flex-direction: row; flex-wrap: wrap; width: max-content;">
+    <div style="width: 50px; height: 10px;"></div>
+    <div style="width: 100px; height: 10px;"></div>
+    <div style="width: 25px; height: 10px;"></div>
+  </div>
+</div>
+
+<!-- computeFlexBasisForChild, row shortcut guard: flex-basis: max-content
+     must beat the definite width for the flex base size (expect 175, not
+     300 and not fit-to-100). -->
+<div id="max_content_flex_basis_beats_width_row" style="flex-direction: row; width: 100px; height: 200px;">
+  <div style="flex-direction: row; flex-wrap: wrap; flex-basis: max-content; width: 300px;">
+    <div style="width: 50px; height: 10px;"></div>
+    <div style="width: 100px; height: 10px;"></div>
+    <div style="width: 25px; height: 10px;"></div>
+  </div>
+</div>
+
+<!-- computeFlexBasisForChild, column shortcut guard: flex-basis: max-content
+     must beat the definite height for the flex base size (expect content
+     height 100, not 300 and not fit-to-80). -->
+<div id="max_content_flex_basis_beats_height_column" style="width: 200px; height: 80px;">
+  <div style="flex-basis: max-content; height: 300px;">
+    <div style="width: 10px; height: 60px;"></div>
+    <div style="width: 10px; height: 40px;"></div>
+  </div>
+</div>
+
+<!-- Flexing: a max-content flex basis is a starting size, not a frozen one;
+     flex-shrink still applies (expect 100, not 175). flex-shrink: 1 must be
+     explicit (the template zeroes it), and min-width: 0 disables the
+     browser's automatic minimum size, which Yoga does not implement. -->
+<div id="max_content_flex_basis_shrinks_with_min_width_zero" style="flex-direction: row; width: 100px; height: 200px;">
+  <div style="flex-direction: row; flex-wrap: wrap; flex-basis: max-content; flex-shrink: 1; min-width: 0;">
+    <div style="width: 50px; height: 10px;"></div>
+    <div style="width: 100px; height: 10px;"></div>
+    <div style="width: 25px; height: 10px;"></div>
+  </div>
+</div>
+
+<!-- The two-pass payoff: a cyclic percentage contributes nothing to the
+     max-content measurement, then resolves against the resolved size
+     (css-sizing-3 section 5.2.1). Box = 100 and percent child = 50; a box of
+     300 means the keyword was ignored, a child of 0 means the percentage
+     resolved during the measurement instead of after it. -->
+<div id="max_content_width_resolves_percent_child" style="width: 300px; height: 100px;">
+  <div style="width: max-content;">
+    <div style="width: 100px; height: 10px;"></div>
+    <div style="width: 50%; height: 10px;"></div>
+  </div>
+</div>
+
+<!-- Cross-axis two-pass, row-parent arm: the height keyword is measured
+     with the item's real main size pinned (ideal height at width 50), and
+     must not stretch to the 150px line (expect 100). -->
+<div id="max_content_height_in_row_parent" style="flex-direction: row; width: 200px; height: 150px;">
+  <div style="width: 50px; height: max-content;">
+    <div style="width: 10px; height: 60px;"></div>
+    <div style="width: 10px; height: 40px;"></div>
+  </div>
+</div>
+
+<!-- Multiline overwrite guard: in a wrapped container the per-line
+     re-stretch runs after align-content; it must not force the 100px line
+     height onto the keyword item (expect 40). The third child forces a
+     second line so the multiline machinery executes. -->
+<div id="max_content_height_multiline_no_line_stretch" style="flex-direction: row; flex-wrap: wrap; width: 120px; height: 300px;">
+  <div style="width: 50px; height: 100px;"></div>
+  <div style="width: 50px; height: max-content;">
+    <div style="width: 10px; height: 40px;"></div>
+  </div>
+  <div style="width: 60px; height: 20px;"></div>
+</div>
+
+<!-- AbsoluteLayout inset guard: with left and right both set, the insets
+     normally define the width (100); a specified max-content width wins
+     instead. The box is over-constrained: expect 175 at left 0, with the
+     right inset giving way. -->
+<div id="max_content_width_absolute_ignores_insets" style="width: 100px; height: 100px;">
+  <div style="position: absolute; left: 0; right: 0; flex-direction: row; width: max-content;">
+    <div style="width: 50px; height: 10px;"></div>
+    <div style="width: 100px; height: 10px;"></div>
+    <div style="width: 25px; height: 10px;"></div>
+  </div>
+</div>
+
+<!-- AbsoluteLayout inset guard, vertical: top and bottom would define the
+     height (80); the max-content height wins. Parent is 80 on purpose so
+     the content height (100) differs from the inset height. -->
+<div id="max_content_height_absolute_ignores_insets" style="width: 100px; height: 80px;">
+  <div style="position: absolute; top: 0; bottom: 0; width: 50px; height: max-content;">
+    <div style="width: 10px; height: 60px;"></div>
+    <div style="width: 10px; height: 40px;"></div>
+  </div>
+</div>
+
+<!-- AbsoluteLayout fit-content fallback guard: an absolute child with no
+     width is normally measured capped at the containing block so text
+     wraps; a max-content width must measure unconstrained instead, keeping
+     the text on one line (expect 260, not wrapped inside 100). -->
+<div id="max_content_width_absolute_text_does_not_wrap" style="width: 100px; height: 100px;">
+  <div style="position: absolute; width: max-content;">
+    <div style="flex-direction: row;">
+      Lorem ipsum dolor sit amet
+    </div>
+  </div>
+</div>
+
+<!-- Both axes max-content with a clamping max-width: the width resolves
+     first (measured, clamped to 100), and the height must be measured at
+     that resolved width, where the content wraps (expect 100x20, not the
+     unclamped one-line 100x10). -->
+<div id="max_content_both_axes_height_remeasured_at_clamped_width" style="flex-direction: row; flex-wrap: wrap; width: max-content; height: max-content; max-width: 100px;">
+  <div style="width: 80px; height: 10px;"></div>
+  <div style="width: 80px; height: 10px;"></div>
+</div>
+
+<!-- Known divergence, kept disabled: browsers transfer the aspect ratio
+     from a resolved max-content axis (height 40 -> width 80); Yoga does not
+     transfer from a keyword axis and produces the content width (10).
+     Enable this once aspect-ratio transfer from intrinsic keywords is
+     implemented. -->
+<div data-disabled="true" id="max_content_with_aspect_ratio" style="flex-direction: row; width: 300px; height: 150px;">
+  <div style="height: max-content; aspect-ratio: 2;">
+    <div style="width: 10px; height: 40px;"></div>
+  </div>
+</div>
