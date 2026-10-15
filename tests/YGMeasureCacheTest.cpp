@@ -176,3 +176,27 @@ TEST(
 
   ASSERT_EQ(1, measureCount);
 }
+
+TEST(YogaTest, remeasure_when_container_grows_with_child_margin) {
+  const YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 10.f);
+  YGNodeStyleSetHeight(root, 10.f);
+
+  const YGNodeRef child = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(child, &measureCount);
+  YGNodeSetMeasureFunc(child, _measureMin);
+  YGNodeStyleSetMargin(child, YGEdgeBottom, 5.f);
+  YGNodeInsertChild(root, child, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(1, measureCount);
+  ASSERT_FLOAT_EQ(5.0f, YGNodeLayoutGetHeight(child));
+
+  YGNodeStyleSetHeight(root, 15.0f);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  ASSERT_FLOAT_EQ(10.0f, YGNodeLayoutGetHeight(child));
+
+  YGNodeFreeRecursive(root);
+}
