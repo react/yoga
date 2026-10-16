@@ -64,13 +64,17 @@ FlexLine calculateFlexLine(
         child->style().computeMarginForAxis(mainAxis, availableInnerWidth);
     const float childLeadingGapMainAxis =
         child == firstElementInLine ? 0.0f : gap;
+    const float minMaxAxisSize =
+        child->hasErrata(Errata::FlexItemPercentMinMaxAgainstOwner)
+        ? mainAxisOwnerSize
+        : availableInnerMainDim;
     const float flexBasisWithMinAndMaxConstraints =
         boundAxisWithinMinAndMax(
             child,
             direction,
             mainAxis,
             child->getLayout().computedFlexBasis,
-            mainAxisOwnerSize,
+            minMaxAxisSize,
             ownerWidth)
             .unwrap();
 
