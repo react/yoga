@@ -539,6 +539,125 @@ TEST(YogaAutoMinSize, static_min_content_short_circuits_container_recursion) {
   YGConfigFree(config);
 }
 
+static YGSize measureMinContentWord(
+    YGNodeConstRef node,
+    float /*width*/,
+    YGMeasureMode /*widthMode*/,
+    float /*height*/,
+    YGMeasureMode /*heightMode*/) {
+  ++gMinContentCalls;
+  const auto* wordWidth = static_cast<const float*>(YGNodeGetContext(node));
+  return YGSize{wordWidth != nullptr ? *wordWidth : kWordWidth, kLineHeight};
+}
+
+// Container recursion asks every child for both axes, and every ancestor's
+// layout probes its children again, so an unmemoized leaf N containers deep is
+// probed O(2^N) times per layout. It must be probed at most once per axis.
+TEST(YogaAutoMinSize, nested_leaf_probed_at_most_once_per_axis_per_layout) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 20);
+  YGNodeStyleSetHeight(root, 50);
+
+  YGNodeRef item = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(root, item, 0);
+  YGNodeRef parent = item;
+  for (int depth = 0; depth < 10; ++depth) {
+    YGNodeRef container = YGNodeNewWithConfig(config);
+    YGNodeStyleSetFlexDirection(
+        container, depth % 2 == 0 ? YGFlexDirectionColumn : YGFlexDirectionRow);
+    YGNodeInsertChild(parent, container, 0);
+    parent = container;
+  }
+  YGNodeRef leaf = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(leaf, measureWordWrappingText);
+  YGNodeSetMinContentMeasureFunc(leaf, measureMinContentWord);
+  YGNodeInsertChild(parent, leaf, 0);
+
+  YGNodeRef spacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(spacer, 10);
+  YGNodeStyleSetFlexShrink(spacer, 0);
+  YGNodeInsertChild(root, spacer, 1);
+
+  gMinContentCalls = 0;
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  EXPECT_LE(gMinContentCalls, 2);
+  // The memoized floor still reaches the outermost item.
+  EXPECT_FLOAT_EQ(kWordWidth, YGNodeLayoutGetWidth(item));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
+// A container's min-content depends on the owner width it is probed with,
+// through percentage padding, and each ancestor probes with its own inner
+// width. The memo must not hand one ancestor's result to another.
+TEST(YogaAutoMinSize, container_min_content_memo_respects_owner_width) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeStyleSetHeight(root, 50);
+
+  YGNodeRef outer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(outer, YGFlexDirectionRow);
+  YGNodeStyleSetFlexBasis(outer, 300);
+  YGNodeInsertChild(root, outer, 0);
+
+  YGNodeRef rootSpacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(rootSpacer, 150);
+  YGNodeStyleSetFlexShrink(rootSpacer, 0);
+  YGNodeInsertChild(root, rootSpacer, 1);
+
+  YGNodeRef inner = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(inner, YGFlexDirectionColumn);
+  YGNodeStyleSetPaddingPercent(inner, YGEdgeLeft, 10);
+  YGNodeStyleSetPaddingPercent(inner, YGEdgeRight, 10);
+  YGNodeInsertChild(outer, inner, 0);
+
+  YGNodeRef leaf = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(leaf, measureWordWrappingText);
+  YGNodeSetMinContentMeasureFunc(leaf, measureMinContentWord);
+  YGNodeInsertChild(inner, leaf, 0);
+
+  YGNodeRef outerSpacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(outerSpacer, 20);
+  YGNodeStyleSetFlexShrink(outerSpacer, 0);
+  YGNodeInsertChild(outer, outerSpacer, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  // Root probes inner against 200: 30 + 2 * 20 = 70, flooring outer at 70.
+  EXPECT_FLOAT_EQ(70.0f, YGNodeLayoutGetWidth(outer));
+  // Outer probes inner against 70: 30 + 2 * 7 = 44, so inner takes the 50
+  // left beside the spacer. Reusing the root's 70 would give 70.
+  EXPECT_FLOAT_EQ(50.0f, YGNodeLayoutGetWidth(inner));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
+// Min-content is memoized for a single layout only: the next layout probes
+// again, so a leaf whose min-content changed gets its new floor.
+TEST(YogaAutoMinSize, min_content_reprobed_on_next_layout) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/20);
+  float wordWidth = kWordWidth;
+  YGNodeSetContext(row.text, &wordWidth);
+  YGNodeSetMinContentMeasureFunc(row.text, measureMinContentWord);
+  row.layout();
+  EXPECT_FLOAT_EQ(kWordWidth, YGNodeLayoutGetWidth(row.text));
+
+  wordWidth = 40.0f;
+  YGNodeMarkDirty(row.text);
+  gMinContentCalls = 0;
+  row.layout();
+
+  EXPECT_GT(gMinContentCalls, 0);
+  EXPECT_FLOAT_EQ(40.0f, YGNodeLayoutGetWidth(row.text));
+}
+
 // Static min-content getter / setter round-trip smoke test.
 TEST(YogaAutoMinSize, static_min_content_getter_setter_round_trip) {
   YGNodeRef node = YGNodeNew();
