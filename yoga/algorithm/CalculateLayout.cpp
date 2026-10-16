@@ -35,7 +35,55 @@
 
 namespace facebook::yoga {
 
+// Margin used to tell an unconstrained FitContent measurement from one that
+// filled its available size.
+constexpr float kUnconstrainedEpsilon = 0.5f;
+
 std::atomic<uint32_t> gCurrentGenerationCount(0);
+
+// Whether laying out `node` resolves a percentage against a height it doesn't
+// define itself: a height, min/max height or flex basis in percent on the
+// node, or on a descendant whose percentage reaches the node's available
+// height. Below a node with a definite height (in points, or from an aspect
+// ratio and a defined width) percentages resolve against that height, and
+// absolutely positioned descendants don't affect the node's size, so neither
+// counts. Children are read from the flags their own layouts left behind,
+// except `display: contents` ones, which are not laid out themselves.
+static bool resolvesHeightPercentage(const yoga::Node* node) {
+  const auto& style = node->style();
+  if (style.dimension(Dimension::Height).isPercent() ||
+      style.minDimension(Dimension::Height).isPercent() ||
+      style.maxDimension(Dimension::Height).isPercent() ||
+      style.flexBasis().isPercent()) {
+    return true;
+  }
+  if (style.dimension(Dimension::Height).isPoints() ||
+      (style.aspectRatio().isDefined() &&
+       (style.dimension(Dimension::Width).isPoints() ||
+        style.dimension(Dimension::Width).isPercent()))) {
+    return false;
+  }
+  for (const auto* child : node->getChildren()) {
+    if (child->style().positionType() == PositionType::Absolute) {
+      continue;
+    }
+    switch (child->style().display()) {
+      case Display::None:
+        break;
+      case Display::Contents:
+        if (resolvesHeightPercentage(child)) {
+          return true;
+        }
+        break;
+      default:
+        if (child->resolvesHeightPercentage()) {
+          return true;
+        }
+        break;
+    }
+  }
+  return false;
+}
 
 static bool hasAutoHorizontalMargin(const Style& style) {
   for (const auto direction : {Direction::LTR, Direction::RTL}) {
@@ -2781,6 +2829,32 @@ bool calculateLayoutInternal(
         break;
       }
     }
+    // A FitContent height that did not constrain an earlier measurement (the
+    // measured height plus margin stayed below it) does not change the result
+    // as long as the new available height still fits that measured height.
+    // Content in a scroll view is measured with the container's growing
+    // height, so without this every clean child misses the cache whenever the
+    // content gets taller. That doesn't hold if a percentage in the subtree
+    // is resolved against the available height.
+    if (cachedResults == nullptr && !node->resolvesHeightPercentage() &&
+        heightSizingMode == SizingMode::FitContent &&
+        yoga::isDefined(availableHeight)) {
+      const float marginColumn =
+          node->style().computeMarginForAxis(FlexDirection::Column, ownerWidth);
+      for (uint32_t i = 0; i < layout->nextCachedMeasurementsIndex; i++) {
+        const auto& cached = layout->cachedMeasurements[i];
+        if (cached.widthSizingMode == widthSizingMode &&
+            yoga::inexactEquals(cached.availableWidth, availableWidth) &&
+            cached.heightSizingMode == SizingMode::FitContent &&
+            yoga::isDefined(cached.availableHeight) &&
+            cached.computedHeight + marginColumn <
+                cached.availableHeight - kUnconstrainedEpsilon &&
+            cached.computedHeight + marginColumn <= availableHeight) {
+          cachedResults = &layout->cachedMeasurements[i];
+          break;
+        }
+      }
+    }
   }
 
   if (!needToVisitNode && cachedResults != nullptr) {
@@ -2809,6 +2883,7 @@ bool calculateLayoutInternal(
 
     layout->lastOwnerDirection = ownerDirection;
     layout->configVersion = node->getConfig()->getVersion();
+    node->setResolvesHeightPercentage(resolvesHeightPercentage(node));
 
     if (cachedResults == nullptr) {
       layoutMarkerData.maxMeasureCache = std::max(

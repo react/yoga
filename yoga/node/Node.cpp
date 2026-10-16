@@ -33,6 +33,7 @@ Node::Node(Node&& node) noexcept
       isReferenceBaseline_(node.isReferenceBaseline_),
       isDirty_(node.isDirty_),
       alwaysFormsContainingBlock_(node.alwaysFormsContainingBlock_),
+      resolvesHeightPercentage_(node.resolvesHeightPercentage_),
       nodeType_(node.nodeType_),
       context_(node.context_),
       measureFunc_(node.measureFunc_),
@@ -208,6 +209,9 @@ void Node::setDirty(bool isDirty) {
     return;
   }
   isDirty_ = isDirty;
+  if (isDirty) {
+    resolvesHeightPercentage_ = true;
+  }
   if (isDirty && (dirtiedFunc_ != nullptr)) {
     dirtiedFunc_(this);
   }

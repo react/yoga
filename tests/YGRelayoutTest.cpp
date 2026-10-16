@@ -253,3 +253,33 @@ TEST(YogaTest, has_new_layout_flag_set_static) {
 
   YGNodeFreeRecursive(root);
 }
+
+TEST(
+    YogaTest,
+    percent_height_in_auto_container_relayout_on_root_height_change) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+
+  YGNodeRef container = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(root, container, 0);
+
+  YGNodeRef child = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeightPercent(child, 50);
+  YGNodeInsertChild(container, child, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(500, YGNodeLayoutGetHeight(container));
+  ASSERT_FLOAT_EQ(250, YGNodeLayoutGetHeight(child));
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(600, YGNodeLayoutGetHeight(container));
+  ASSERT_FLOAT_EQ(300, YGNodeLayoutGetHeight(child));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}

@@ -194,6 +194,17 @@ class YG_EXPORT Node : public ::YGNode {
     return isDirty_;
   }
 
+  /**
+   * Whether the last layout of this node resolved a percentage against a
+   * height, on the node itself or on a descendant that takes part in its
+   * layout. Measurements of such a node depend on the available height even
+   * when they don't fill it. True until the node has been laid out, and again
+   * once it is dirtied.
+   */
+  bool resolvesHeightPercentage() const {
+    return resolvesHeightPercentage_;
+  }
+
   Style::SizeLength getProcessedDimension(Dimension dimension) const {
     return processedDimensions_[static_cast<size_t>(dimension)];
   }
@@ -230,6 +241,10 @@ class YG_EXPORT Node : public ::YGNode {
 
   void setHasNewLayout(bool hasNewLayout) {
     hasNewLayout_ = hasNewLayout;
+  }
+
+  void setResolvesHeightPercentage(bool resolvesHeightPercentage) {
+    resolvesHeightPercentage_ = resolvesHeightPercentage;
   }
 
   void setNodeType(NodeType nodeType) {
@@ -342,6 +357,7 @@ class YG_EXPORT Node : public ::YGNode {
   bool isReferenceBaseline_ : 1 = false;
   bool isDirty_ : 1 = true;
   bool alwaysFormsContainingBlock_ : 1 = false;
+  bool resolvesHeightPercentage_ : 1 = true;
   NodeType nodeType_ : bitCount<NodeType>() = NodeType::Default;
   void* context_ = nullptr;
   YGMeasureFunc measureFunc_ = nullptr;
