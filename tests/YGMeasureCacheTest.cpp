@@ -176,3 +176,48 @@ TEST(
 
   ASSERT_EQ(1, measureCount);
 }
+
+TEST(YogaTest, keep_cached_measurement_when_owner_resizes_without_percentages) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMax);
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const int measuresBeforeResize = measureCount;
+
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(measuresBeforeResize, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, remeasure_when_owner_resizes_with_percent_padding) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMax);
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeStyleSetPaddingPercent(root_child0, YGEdgeTop, 10);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetPadding(root_child0, YGEdgeTop));
+  const int measuresBeforeResize = measureCount;
+
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(20, YGNodeLayoutGetPadding(root_child0, YGEdgeTop));
+  ASSERT_GT(measureCount, measuresBeforeResize);
+
+  YGNodeFreeRecursive(root);
+}
