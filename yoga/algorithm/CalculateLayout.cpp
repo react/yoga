@@ -1104,15 +1104,13 @@ static float distributeFreeSpaceSecondPass(
       if (flexShrinkScaledFactor != 0) {
         float childSize = YGUndefined;
 
-        // Use a relative epsilon guard instead of exact equality: after the
-        // first pass removes all constrained items,
-        // totalFlexShrinkScaledFactors may be near-zero rather than exactly 0
-        // due to floating-point cancellation.  Dividing by a near-zero value
-        // produces a gigantic childSize that overwhelms the min/max clamp.
-        const float shrinkFactorMagnitude =
-            std::abs(flexLine.layout.totalFlexShrinkScaledFactors);
-        if (yoga::isDefined(flexLine.layout.totalFlexShrinkScaledFactors) &&
-            shrinkFactorMagnitude < 1e-6f) {
+        // Once the first pass has frozen every shrinkable item there is nothing
+        // left to distribute proportionally. Test that with the item count
+        // rather than by comparing totalFlexShrinkScaledFactors against zero.
+        // Float accumulation is not exact -- (a + b) - a - b need not be 0 even
+        // for identical operands -- so any absolute epsilon here is a guess;
+        // the previous 1e-6f guard missed a real 1.9e-6 residual (#2038).
+        if (flexLine.layout.numberOfShrinkableItems == 0) {
           childSize = childFlexBasis + flexShrinkScaledFactor;
         } else {
           childSize = childFlexBasis +
@@ -1336,9 +1334,22 @@ static void distributeFreeSpaceFirstPass(
           // resulting in the item's size calculation being identical in the
           // first and second passes.
           deltaFreeSpace += boundMainSize - childFlexBasis;
+          // Round to float before subtracting. Left inline, the compiler may
+          // contract this multiply-subtract into a fused multiply-add that
+          // uses the unrounded product, so it does not cancel against the
+          // float accumulator built in calculateFlexLine and leaves a residual
+          // (2^-19 for an aspect-ratio basis) which
+          // distributeFreeSpaceSecondPass then divides the remaining free space
+          // by.
+          const float excludedShrinkScaledFactor =
+              -currentLineChild->resolveFlexShrink() *
+              currentLineChild->getLayout().computedFlexBasis.unwrap();
           flexLine.layout.totalFlexShrinkScaledFactors -=
-              (-currentLineChild->resolveFlexShrink() *
-               currentLineChild->getLayout().computedFlexBasis.unwrap());
+              excludedShrinkScaledFactor;
+          if (excludedShrinkScaledFactor != 0 &&
+              flexLine.layout.numberOfShrinkableItems > 0) {
+            flexLine.layout.numberOfShrinkableItems--;
+          }
         }
       }
     } else if (

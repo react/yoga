@@ -28,6 +28,7 @@ FlexLine calculateFlexLine(
   float sizeConsumed = 0.0f;
   float totalFlexGrowFactors = 0.0f;
   float totalFlexShrinkScaledFactors = 0.0f;
+  size_t numberOfShrinkableItems = 0;
   size_t numberOfAutoMargins = 0;
   yoga::Node* firstElementInLine = nullptr;
 
@@ -94,8 +95,12 @@ FlexLine calculateFlexLine(
 
       // Unlike the grow factor, the shrink factor is scaled relative to the
       // child dimension.
-      totalFlexShrinkScaledFactors += -child->resolveFlexShrink() *
+      const float shrinkScaledFactor = -child->resolveFlexShrink() *
           child->getLayout().computedFlexBasis.unwrap();
+      totalFlexShrinkScaledFactors += shrinkScaledFactor;
+      if (shrinkScaledFactor != 0) {
+        numberOfShrinkableItems++;
+      }
     }
 
     itemsInFlow.push_back(child);
@@ -118,6 +123,7 @@ FlexLine calculateFlexLine(
       .layout = FlexLineRunningLayout{
           totalFlexGrowFactors,
           totalFlexShrinkScaledFactors,
+          numberOfShrinkableItems,
       }};
 }
 

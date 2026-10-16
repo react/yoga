@@ -23,6 +23,13 @@ struct FlexLineRunningLayout {
   // line. This is decremented as free space is distributed.
   float totalFlexShrinkScaledFactors{0.0f};
 
+  // Number of items on the line which can still shrink, i.e. whose scaled
+  // shrink factor is non-zero. Kept in lockstep with
+  // totalFlexShrinkScaledFactors as items are frozen so that "no shrinkable
+  // items remain" can be tested exactly rather than by comparing an accumulated
+  // float against zero.
+  size_t numberOfShrinkableItems{0};
+
   // The amount of available space within inner dimensions of the line which may
   // still be distributed.
   float remainingFreeSpace{0.0f};
