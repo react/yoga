@@ -152,7 +152,8 @@ YG_ENUM_DECL(
     YGUnitAuto,
     YGUnitMaxContent,
     YGUnitFitContent,
-    YGUnitStretch)
+    YGUnitStretch,
+    YGUnitDynamic)
 
 YG_ENUM_DECL(
     YGWrap,
