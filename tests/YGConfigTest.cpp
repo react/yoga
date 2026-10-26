@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <yoga/Yoga.h>
 #include <yoga/config/Config.h>
+#include <yoga/debug/Log.h>
 #include <yoga/node/Node.h>
 
 #include <functional>
@@ -15,6 +16,92 @@
 #include <stdexcept>
 
 using namespace facebook;
+
+TEST(YogaTest, default_config_is_constexpr) {
+#if defined(_WIN32)
+  const auto& config = yoga::Config::getDefault();
+  const auto copy = config;
+#else
+  constexpr const auto& config = yoga::Config::getDefault();
+  constexpr auto copy = config;
+  static_assert(&config == &yoga::Config::getDefault());
+#endif
+
+  EXPECT_EQ(&config, YGConfigGetDefault());
+  auto* node = YGNodeNew();
+  auto* clone = YGNodeClone(node);
+  EXPECT_EQ(yoga::resolveRef(node)->getConfig(), &config);
+  EXPECT_EQ(yoga::resolveRef(clone)->getConfig(), &config);
+  YGNodeFree(node);
+  YGNodeFree(clone);
+
+  auto* mutableConfig = static_cast<yoga::Config*>(YGConfigNew());
+  for (const auto* current : {&config, &copy}) {
+    EXPECT_EQ(current->useWebDefaults(), mutableConfig->useWebDefaults());
+    EXPECT_EQ(
+        current->getPointScaleFactor(), mutableConfig->getPointScaleFactor());
+    EXPECT_EQ(current->getErrata(), mutableConfig->getErrata());
+    EXPECT_EQ(
+        current->getEnabledExperiments(),
+        mutableConfig->getEnabledExperiments());
+    EXPECT_EQ(current->getVersion(), mutableConfig->getVersion());
+    EXPECT_EQ(current->getContext(), mutableConfig->getContext());
+  }
+  YGConfigFree(mutableConfig);
+}
+
+// NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
+TEST(YogaTest, null_logger_resolves_default_when_logging) {
+#if defined(_WIN32)
+  const auto copy = yoga::Config::getDefault();
+#else
+  constexpr auto copy = yoga::Config::getDefault();
+#endif
+  yoga::Config nullLogger{nullptr};
+  yoga::Config resetLogger{yoga::getDefaultLogger()};
+  resetLogger.setLogger(nullptr);
+
+  const yoga::Config* configs[] = {
+      &yoga::Config::getDefault(), &copy, &nullLogger, &resetLogger};
+  for (const auto* config : configs) {
+#ifndef ANDROID
+    testing::internal::CaptureStderr();
+#endif
+    yoga::log(
+        config, yoga::LogLevel::Error, "default logger %s %d\n", "message", 42);
+#ifndef ANDROID
+    EXPECT_EQ(
+        testing::internal::GetCapturedStderr(), "default logger message 42\n");
+#endif
+  }
+}
+
+TEST(YogaTest, copied_config_preserves_custom_logger_arguments) {
+  int calls = 0;
+  auto logger = [](YGConfigConstRef config,
+                   YGNodeConstRef node,
+                   YGLogLevel level,
+                   const char* format,
+                   va_list args) -> int {
+    EXPECT_EQ(node, nullptr);
+    EXPECT_EQ(level, YGLogLevelError);
+    EXPECT_STREQ(format, "%s %d");
+    EXPECT_STREQ(va_arg(args, const char*), "custom");
+    EXPECT_EQ(va_arg(args, int), 42);
+    ++*static_cast<int*>(YGConfigGetContext(config));
+    return 0;
+  };
+  yoga::Config config{logger};
+  config.setContext(&calls);
+  auto copy = config;
+
+  yoga::log(&config, yoga::LogLevel::Error, "%s %d", "custom", 42);
+  yoga::log(&copy, yoga::LogLevel::Error, "%s %d", "custom", 42);
+  EXPECT_EQ(calls, 2);
+  EXPECT_EQ(config.getVersion(), 0u);
+  EXPECT_EQ(copy.getVersion(), 0u);
+}
+// NOLINTEND(cppcoreguidelines-pro-type-vararg)
 
 struct ConfigCloningTest : public ::testing::Test {
   std::unique_ptr<yoga::Config, std::function<void(yoga::Config*)>> config;
