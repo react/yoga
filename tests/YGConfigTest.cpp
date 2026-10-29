@@ -289,10 +289,12 @@ TEST(YogaTest, config_errata_bitmask_add_remove_operations) {
 
   // Default configs carry the errata that preserve legacy geometry
   // (MinSizeUndefinedInsteadOfAuto for CSS §4.5 auto-min,
-  // FlexFirstPassUsesRunningTotals for free-space distribution). Clear them
-  // for this test so we can assert exact equality at the end.
+  // FlexFirstPassUsesRunningTotals for free-space distribution,
+  // WrapCrossAlignmentIgnoresMarginAndInset for multi-line cross positions).
+  // Clear them for this test so we can assert exact equality at the end.
   config->removeErrata(yoga::Errata::MinSizeUndefinedInsteadOfAuto);
   config->removeErrata(yoga::Errata::FlexFirstPassUsesRunningTotals);
+  config->removeErrata(yoga::Errata::WrapCrossAlignmentIgnoresMarginAndInset);
 
   // Initially no errata
   ASSERT_FALSE(config->hasErrata(yoga::Errata::StretchFlexBasis));

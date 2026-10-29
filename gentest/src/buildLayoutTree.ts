@@ -69,6 +69,7 @@ export default async function buildLayoutTree(
           styleAttr: originalStyles.get(child) || '',
           experiments: child.dataset.experiments ? child.dataset.experiments.split(' ') : [],
           disabled: child.dataset.disabled === 'true',
+          errata: child.dataset.errata || null,
           innerText: innerText,
           children: walkTree(child, rect.left, rect.top)
         });
@@ -93,6 +94,7 @@ interface RawNode {
   styleAttr: string;
   experiments: string[];
   disabled: boolean;
+  errata: string | null;
   innerText: string;
   children: RawNode[];
 }

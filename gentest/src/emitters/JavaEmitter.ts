@@ -179,6 +179,7 @@ export class JavaEmitter extends Emitter {
     name: string,
     experiments: string[],
     disabled: boolean,
+    errata: string | null,
   ): void {
     this.push('@Test');
     if (disabled) {
@@ -188,6 +189,9 @@ export class JavaEmitter extends Emitter {
     this.pushIndent();
 
     this.push('YogaConfig config = YogaConfigFactory.create();');
+    if (errata != null) {
+      this.push('config.setErrata(YogaErrata.' + toJavaUpper(errata) + ');');
+    }
     for (const experiment of experiments) {
       this.push(
         'config.setExperimentalFeatureEnabled(YogaExperimentalFeature.' +

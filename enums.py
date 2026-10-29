@@ -100,6 +100,14 @@ ENUMS = {
         # default on new configs to preserve the pre-fix geometry. Clear this
         # bit to opt into the spec-correct single distribution.
         ("FlexFirstPassUsesRunningTotals", 1 << 4),
+        # In the multi-line alignment pass, which runs for wrapping containers
+        # and for rows with baseline alignment, position items on the cross
+        # axis without all of their margins and relative insets: `flex-start`
+        # applies the inset in place of the leading margin, `stretch` and
+        # `flex-end` drop the inset, and `center` centers the border box.
+        # Set by default on new configs to preserve the pre-fix geometry.
+        # Clear this bit to opt into the spec-correct positions.
+        ("WrapCrossAlignmentIgnoresMarginAndInset", 1 << 5),
         # Enable all incorrect behavior (preserve compatibility)
         ("All", 0x7FFFFFFF),
         # Enable all errata except for "StretchFlexBasis" (Defaults behavior

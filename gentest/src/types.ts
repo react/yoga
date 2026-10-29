@@ -27,6 +27,7 @@ export interface LayoutNode {
   styleAttr: string;
   experiments: string[];
   disabled: boolean;
+  errata: string | null;
   innerText: string;
   children: LayoutNode[];
 }
@@ -38,4 +39,5 @@ export interface TestCase {
   styleAttr: string;
   experiments: string[];
   disabled: boolean;
+  errata: string | null;
 }
