@@ -393,7 +393,6 @@ int main(int argc, char* argv[]) {
     facebook::yoga::benchmark(capturesDir);
   } else {
     throw std::invalid_argument("Expecting a path as an argument");
-    return 1;
   }
 
   return 0;
