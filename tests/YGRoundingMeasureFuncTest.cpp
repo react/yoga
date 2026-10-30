@@ -188,3 +188,44 @@ TEST(YogaTest, rounding_feature_with_custom_measure_keeps_whole_pixel_height) {
 
   YGConfigFree(config);
 }
+
+// Regression test for https://github.com/react/yoga/issues/2053
+// The container is served from the layout cache when the sibling changes, so
+// the measured node inside it is rounded again on every pass. That has to
+// start from its unrounded height, or the height grows a pixel each time.
+TEST(YogaTest, rounding_feature_with_custom_measure_keeps_height_when_cached) {
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetPointScaleFactor(config, 100.0f);
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 200);
+
+  // Puts the container at y = 527.37, which a float holds as 527.3699951.
+  YGNodeRef sibling = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(sibling, 10);
+  YGNodeStyleSetHeight(sibling, 527.37f);
+  YGNodeInsertChild(root, sibling, 0);
+
+  YGNodeRef container = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(root, container, 1);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(
+      text, [](YGNodeConstRef, float, YGMeasureMode, float, YGMeasureMode) {
+        return YGSize{50, 128.03f};
+      });
+  YGNodeInsertChild(container, text, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const float height = YGNodeLayoutGetHeight(text);
+
+  for (const float width : {11.0f, 12.0f, 13.0f, 14.0f, 15.0f}) {
+    YGNodeStyleSetWidth(sibling, width);
+    YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+    ASSERT_FLOAT_EQ(height, YGNodeLayoutGetHeight(text)) << "width " << width;
+  }
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}

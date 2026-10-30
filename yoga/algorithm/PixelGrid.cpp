@@ -94,8 +94,8 @@ void roundLayoutResultsToPixelGrid(
   const double nodeLeft = node->getLayout().position(PhysicalEdge::Left);
   const double nodeTop = node->getLayout().position(PhysicalEdge::Top);
 
-  const double nodeWidth = node->getLayout().dimension(Dimension::Width);
-  const double nodeHeight = node->getLayout().dimension(Dimension::Height);
+  const double nodeWidth = node->getLayout().rawDimension(Dimension::Width);
+  const double nodeHeight = node->getLayout().rawDimension(Dimension::Height);
 
   const double absoluteNodeLeft = absoluteLeft + nodeLeft;
   const double absoluteNodeTop = absoluteTop + nodeTop;
