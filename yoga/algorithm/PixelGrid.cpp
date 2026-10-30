@@ -94,8 +94,8 @@ void roundLayoutResultsToPixelGrid(
   const double nodeLeft = node->getLayout().position(PhysicalEdge::Left);
   const double nodeTop = node->getLayout().position(PhysicalEdge::Top);
 
-  const double nodeWidth = node->getLayout().rawDimension(Dimension::Width);
-  const double nodeHeight = node->getLayout().rawDimension(Dimension::Height);
+  const double nodeWidth = node->getLayout().dimension(Dimension::Width);
+  const double nodeHeight = node->getLayout().dimension(Dimension::Height);
 
   const double absoluteNodeLeft = absoluteLeft + nodeLeft;
   const double absoluteNodeTop = absoluteTop + nodeTop;
@@ -119,14 +119,23 @@ void roundLayoutResultsToPixelGrid(
     // We multiply dimension by scale factor and if the result is close to the
     // whole number, we don't have any fraction To verify if the result is close
     // to whole number we want to check both floor and ceil numbers
+    //
+    // A size that is the float nearest to a whole pixel is whole too. Its float
+    // error can exceed the tolerance once scaled (128.03 at a scale of 100),
+    // and a size rounded on an earlier pass, as in a cached subtree, has to
+    // keep its value when it's rounded again.
 
     const double scaledNodeWidth = nodeWidth * pointScaleFactor;
     const bool hasFractionalWidth =
-        !yoga::inexactEquals(round(scaledNodeWidth), scaledNodeWidth);
+        !yoga::inexactEquals(round(scaledNodeWidth), scaledNodeWidth) &&
+        static_cast<float>(round(scaledNodeWidth) / pointScaleFactor) !=
+            static_cast<float>(nodeWidth);
 
     const double scaledNodeHeight = nodeHeight * pointScaleFactor;
     const bool hasFractionalHeight =
-        !yoga::inexactEquals(round(scaledNodeHeight), scaledNodeHeight);
+        !yoga::inexactEquals(round(scaledNodeHeight), scaledNodeHeight) &&
+        static_cast<float>(round(scaledNodeHeight) / pointScaleFactor) !=
+            static_cast<float>(nodeHeight);
 
     node->getLayout().setDimension(
         Dimension::Width,
