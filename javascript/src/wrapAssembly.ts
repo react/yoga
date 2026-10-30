@@ -939,7 +939,16 @@ export default function wrapAssembly(lib: any): Yoga {
       height: number | 'auto' | undefined = NaN,
       direction: Direction = Direction.LTR,
     ): void {
-      lib._YGNodeCalculateLayout(this._ptr, width, height, direction);
+      // An exception thrown by a measure function unwinds the WebAssembly
+      // frames of the layout without restoring the stack pointer. Restore it,
+      // or repeated exceptions overflow the stack into static memory.
+      const stack = lib.stackSave();
+      try {
+        lib._YGNodeCalculateLayout(this._ptr, width, height, direction);
+      } catch (e) {
+        lib.stackRestore(stack);
+        throw e;
+      }
     }
 
     // --- Layout getters ---
