@@ -106,6 +106,10 @@ class StyleValueHandle {
     repr_ |= kHandleIndexedMask;
   }
 
+  constexpr void setValueIsNotIndexed() {
+    repr_ &= (~kHandleIndexedMask);
+  }
+
   uint16_t repr_{0};
 };
 

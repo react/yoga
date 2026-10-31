@@ -155,14 +155,10 @@ class StyleValuePool {
       StyleValueHandle& handle,
       StyleValueHandle::Keyword keyword) {
     handle.setType(StyleValueHandle::Type::Keyword);
-
-    if (handle.isValueIndexed()) {
-      auto newIndex =
-          buffer_.replace(handle.value(), static_cast<uint32_t>(keyword));
-      handle.setValue(newIndex);
-    } else {
-      handle.setValue(static_cast<uint16_t>(keyword));
-    }
+    // A keyword always fits in the handle. setValue keeps bit 3, so an
+    // existing pool index would be read back as Keyword's enum value.
+    handle.setValue(static_cast<uint16_t>(keyword));
+    handle.setValueIsNotIndexed();
   }
 
   static constexpr bool isIntegerPackable(float f) {
