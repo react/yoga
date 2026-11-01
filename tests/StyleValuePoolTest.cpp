@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include <array>
 #include <gtest/gtest.h>
+#include <array>
 #include <yoga/style/StyleValuePool.h>
 
 namespace facebook::yoga {
