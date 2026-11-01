@@ -6,8 +6,8 @@
  */
 
 #include <gtest/gtest.h>
-#include <array>
 #include <yoga/style/StyleValuePool.h>
+#include <array>
 
 namespace facebook::yoga {
 
