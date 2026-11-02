@@ -101,6 +101,20 @@ public interface YogaProps {
 
   public fun setBorder(edge: YogaEdge, value: Float)
 
+  /* Gap properties */
+
+  /** Returns the gap, or [YogaValue.UNDEFINED] if this implementation does not support gaps. */
+  public fun getGap(gutter: YogaGutter): YogaValue = YogaValue.UNDEFINED
+
+  /**
+   * Sets the gap in points. Does nothing by default for compatibility with existing
+   * implementations.
+   */
+  public fun setGap(gutter: YogaGutter, gapLength: Float) {}
+
+  /** Sets the gap as a percentage. Does nothing by default for existing implementations. */
+  public fun setGapPercent(gutter: YogaGutter, gapLength: Float) {}
+
   /* Flex basis properties */
 
   public fun setFlexBasisAuto()
