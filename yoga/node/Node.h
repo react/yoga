@@ -317,6 +317,7 @@ class YG_EXPORT Node : public ::YGNode {
   void removeChild(size_t index);
 
   void cloneChildrenIfNeeded();
+  void cloneChildIfNeeded(size_t index);
   void cloneContentsChildrenIfNeeded();
   void markDirtyAndPropagate();
   float resolveFlexGrow() const;
