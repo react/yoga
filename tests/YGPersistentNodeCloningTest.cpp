@@ -358,8 +358,9 @@ TEST_F(
       std::make_shared<NodeWrapper>(*root, std::vector{hiddenPrime});
 
   std::vector<NodeWrapper*> nodesCloned;
-  // We should only need to clone the shared siblings on the path to "New",
-  // "C" and "D", but not the zeroed out subtree of "D"
+  // Only "New" needs zeroing out, and its ancestors are new revisions that own
+  // it. The shared siblings on its path, "C" and "D", are already zeroed out,
+  // so nothing should be cloned
   onClone = [&](YGNodeConstRef oldNode,
                 YGNodeConstRef /*owner*/,
                 size_t /*childIndex*/) {
@@ -369,7 +370,7 @@ TEST_F(
   YGNodeCalculateLayout(
       rootPrime->node, YGUndefined, YGUndefined, YGDirectionLTR);
 
-  EXPECT_EQ(nodesCloned, (std::vector<NodeWrapper*>{d.get(), c.get()}));
+  EXPECT_TRUE(nodesCloned.empty());
   expectZeroedOut(newNode->node);
   expectZeroedOut(e->node);
 }
