@@ -1,3 +1,43 @@
 <div id="zero_aspect_ratio_behaves_like_auto" style="width: 300px; height: 300px;">
   <div style="aspect-ratio: 0; width: 50px"></div>
 </div>
+
+<div id="aspect_ratio_stretch_margin_column" style="width: 200px; height: 300px; align-items: center; justify-content: center;">
+  <div style="aspect-ratio: 2; align-self: stretch; margin: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_row" style="width: 500px; height: 200px; flex-direction: row; align-items: center; justify-content: center;">
+  <div style="aspect-ratio: 2; align-self: stretch; margin: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_column_reverse" style="width: 200px; height: 300px; flex-direction: column-reverse;">
+  <div style="aspect-ratio: 2; margin: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_row_reverse" style="width: 500px; height: 200px; flex-direction: row-reverse;">
+  <div style="aspect-ratio: 2; margin: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_column_asymmetric" style="width: 200px; height: 300px;">
+  <div style="aspect-ratio: 2; margin-top: 5px; margin-bottom: 15px; margin-left: 10px; margin-right: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_row_asymmetric" style="width: 500px; height: 200px; flex-direction: row;">
+  <div style="aspect-ratio: 2; margin-left: 5px; margin-right: 15px; margin-top: 10px; margin-bottom: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_percentage" style="width: 200px; height: 300px;">
+  <div style="aspect-ratio: 2; margin-top: 10%; margin-bottom: 5%; margin-left: 10px; margin-right: 10px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_padding_border" style="width: 200px; height: 300px; padding: 10px; border-width: 5px;">
+  <div style="aspect-ratio: 2; margin: 10px; padding: 5px; border-width: 2px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_no_main_margin" style="width: 200px; height: 300px;">
+  <div style="aspect-ratio: 2; margin-left: 10px; margin-right: 20px;"></div>
+</div>
+
+<div id="aspect_ratio_stretch_margin_issue_1788" style="width: 400px; height: 800px; align-items: center; justify-content: center;">
+  <div style="aspect-ratio: 1.7777777777777777; align-self: stretch; margin: 24px;"></div>
+</div>
