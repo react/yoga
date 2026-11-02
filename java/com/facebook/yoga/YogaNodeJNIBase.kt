@@ -18,6 +18,7 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
   private var measureFunction: YogaMeasureFunction? = null
   private var minContentMeasureFunction: YogaMeasureFunction? = null
   private var baselineFunction: YogaBaselineFunction? = null
+  private var dirtiedFunction: YogaDirtiedFunction? = null
   protected var nativePointer: Long = 0
 
   // JNI-accessed field name — do not rename (see YGJNIVanilla.cpp)
@@ -49,6 +50,7 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
     measureFunction = null
     minContentMeasureFunction = null
     baselineFunction = null
+    dirtiedFunction = null
     data = null
     arr = null
     hasNewLayoutField = true
@@ -103,6 +105,7 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
       val clonedNativePointer = YogaNative.jni_YGNodeCloneJNI(nativePointer)
       clonedYogaNode.owner = null
       clonedYogaNode.nativePointer = clonedNativePointer
+      clonedYogaNode.setDirtiedFunction(dirtiedFunction)
       for (i in 0 until clonedYogaNode.childCount) {
         clonedYogaNode.swapChildAt(clonedYogaNode.getChildAt(i).cloneWithChildren(), i)
       }
@@ -118,6 +121,7 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
       val clonedNativePointer = YogaNative.jni_YGNodeCloneJNI(nativePointer)
       clonedYogaNode.owner = null
       clonedYogaNode.nativePointer = clonedNativePointer
+      clonedYogaNode.setDirtiedFunction(dirtiedFunction)
       clonedYogaNode.clearChildren()
       return clonedYogaNode
     } catch (ex: CloneNotSupportedException) {
@@ -591,6 +595,20 @@ public abstract class YogaNodeJNIBase : YogaNode, Cloneable {
         height,
         YogaMeasureMode.fromInt(heightMode),
     )
+  }
+
+  override fun setDirtiedFunction(dirtiedFunction: YogaDirtiedFunction?) {
+    this.dirtiedFunction = dirtiedFunction
+    YogaNative.jni_YGNodeSetDirtiedFuncJNI(
+        nativePointer,
+        if (dirtiedFunction != null) this else null,
+    )
+  }
+
+  // Called from JNI. Must not be overridden, like measure() and baseline().
+  @DoNotStrip
+  public fun dirtied() {
+    dirtiedFunction?.dirtied(this)
   }
 
   override fun setBaselineFunction(yogaBaselineFunction: YogaBaselineFunction?) {
