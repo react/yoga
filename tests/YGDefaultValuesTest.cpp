@@ -173,3 +173,12 @@ TEST(YogaTest, assert_box_sizing_border_box) {
 
   YGConfigFree(config);
 }
+
+TEST(YogaTest, width_keyword_replaces_pooled_number) {
+  const YGNodeRef node = YGNodeNew();
+  YGNodeStyleSetHeight(node, 0.5f);
+  YGNodeStyleSetWidth(node, 0.25f);
+  YGNodeStyleSetWidthMaxContent(node);
+  ASSERT_EQ(YGNodeStyleGetWidth(node).unit, YGUnitMaxContent);
+  YGNodeFree(node);
+}
