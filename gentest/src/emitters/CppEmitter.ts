@@ -91,6 +91,7 @@ export class CppEmitter extends Emitter {
     name: string,
     experiments: string[],
     disabled: boolean,
+    errata: string | null,
   ): void {
     this.push('TEST(YogaTest, ' + name + ') {');
     this.pushIndent();
@@ -101,6 +102,9 @@ export class CppEmitter extends Emitter {
     }
 
     this.push('YGConfigRef config = YGConfigNew();');
+    if (errata != null) {
+      this.push('YGConfigSetErrata(config, YGErrata' + errata + ');');
+    }
     for (const experiment of experiments) {
       this.push(
         'YGConfigSetExperimentalFeatureEnabled(config, YGExperimentalFeature' +
