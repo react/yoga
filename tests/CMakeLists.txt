@@ -8,18 +8,22 @@ cmake_minimum_required(VERSION 3.13...3.26)
 project(tests)
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-include(FetchContent)
 include(GoogleTest)
 
 set(YOGA_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include(${YOGA_ROOT}/cmake/project-defaults.cmake)
 
-# Fetch GTest
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
-)
-FetchContent_MakeAvailable(googletest)
+if(YOGA_DISABLE_FETCHCONTENT)
+  find_package(GTest REQUIRED)
+else()
+  # Fetch GTest
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+  )
+  FetchContent_MakeAvailable(googletest)
+endif()
 
 add_subdirectory(${YOGA_ROOT}/yoga ${CMAKE_CURRENT_BINARY_DIR}/yoga)
 

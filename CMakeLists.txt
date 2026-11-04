@@ -13,6 +13,7 @@ add_subdirectory(yoga)
 add_subdirectory(tests)
 
 option(BUILD_FUZZ_TESTS "Build fuzz tests" OFF)
+option(YOGA_DISABLE_FETCHCONTENT "Build without FetchContent" OFF)
 
 if ('${CMAKE_CXX_COMPILER_ID}' MATCHES 'Clang' AND  BUILD_FUZZ_TESTS)
     add_subdirectory(fuzz)
