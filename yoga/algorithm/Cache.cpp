@@ -97,7 +97,7 @@ bool canUseCachedMeasurement(
           widthMode,
           availableWidth - marginRow,
           lastWidthMode,
-          lastAvailableWidth,
+          lastAvailableWidth - marginRow,
           lastComputedWidth);
 
   const bool heightIsCompatible = hasSameHeightSpec ||
@@ -112,7 +112,7 @@ bool canUseCachedMeasurement(
       newSizeIsStricterAndStillValid(heightMode,
                                      availableHeight - marginColumn,
                                      lastHeightMode,
-                                     lastAvailableHeight,
+                                     lastAvailableHeight - marginColumn,
                                      lastComputedHeight);
 
   return widthIsCompatible && heightIsCompatible;
