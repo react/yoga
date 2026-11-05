@@ -45,6 +45,7 @@ add_link_options(
     "SHELL:-s EXPORT_ES6=1"
     "SHELL:-s WASM=1"
     "SHELL:-s TEXTDECODER=0"
+    "SHELL:-s SUPPORT_BIG_ENDIAN=1"
     # SINGLE_FILE=1 combined with ENVIRONMENT='web' creates code that works on
     # both bundlders and Node.
     "SHELL:-s SINGLE_FILE=1"

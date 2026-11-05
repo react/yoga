@@ -11,7 +11,7 @@ on:
 jobs:
   lint-pods:
     name: Build [CocoaPods]
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
 
   test:
     name: Build [SwiftPM]
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v3

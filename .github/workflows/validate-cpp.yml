@@ -97,13 +97,3 @@ jobs:
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
         working-directory: capture
-
-  clang-format:
-    name: Format
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: clang-format
-        uses: ./.github/actions/clang-format
