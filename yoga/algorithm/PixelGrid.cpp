@@ -96,31 +96,31 @@ void roundLayoutResultsToPixelGrid(
     // We multiply dimension by scale factor and if the result is close to the
     // whole number, we don't have any fraction To verify if the result is close
     // to whole number we want to check both floor and ceil numbers
+    const double scaledNodeWidth = nodeWidth * pointScaleFactor;
     const bool hasFractionalWidth =
-        !yoga::inexactEquals(fmod(nodeWidth * pointScaleFactor, 1.0), 0) &&
-        !yoga::inexactEquals(fmod(nodeWidth * pointScaleFactor, 1.0), 1.0);
+        !yoga::inexactEquals(fmod(scaledNodeWidth, 1.0), 0) &&
+        !yoga::inexactEquals(fmod(scaledNodeWidth, 1.0), 1.0);
+    const double scaledNodeHeight = nodeHeight * pointScaleFactor;
     const bool hasFractionalHeight =
-        !yoga::inexactEquals(fmod(nodeHeight * pointScaleFactor, 1.0), 0) &&
-        !yoga::inexactEquals(fmod(nodeHeight * pointScaleFactor, 1.0), 1.0);
+        !yoga::inexactEquals(fmod(scaledNodeHeight, 1.0), 0) &&
+        !yoga::inexactEquals(fmod(scaledNodeHeight, 1.0), 1.0);
 
     node->setLayoutDimension(
-        roundValueToPixelGrid(
-            absoluteNodeRight,
-            pointScaleFactor,
-            (textRounding && hasFractionalWidth),
-            (textRounding && !hasFractionalWidth)) -
-            roundValueToPixelGrid(
-                absoluteNodeLeft, pointScaleFactor, false, textRounding),
+        textRounding && !hasFractionalWidth
+            ? static_cast<float>(round(scaledNodeWidth) / pointScaleFactor)
+            : roundValueToPixelGrid(
+                  absoluteNodeRight, pointScaleFactor, textRounding, false) -
+                roundValueToPixelGrid(
+                    absoluteNodeLeft, pointScaleFactor, false, textRounding),
         Dimension::Width);
 
     node->setLayoutDimension(
-        roundValueToPixelGrid(
-            absoluteNodeBottom,
-            pointScaleFactor,
-            (textRounding && hasFractionalHeight),
-            (textRounding && !hasFractionalHeight)) -
-            roundValueToPixelGrid(
-                absoluteNodeTop, pointScaleFactor, false, textRounding),
+        textRounding && !hasFractionalHeight
+            ? static_cast<float>(round(scaledNodeHeight) / pointScaleFactor)
+            : roundValueToPixelGrid(
+                  absoluteNodeBottom, pointScaleFactor, textRounding, false) -
+                roundValueToPixelGrid(
+                    absoluteNodeTop, pointScaleFactor, false, textRounding),
         Dimension::Height);
   }
 
