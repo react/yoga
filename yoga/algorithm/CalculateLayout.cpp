@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <vector>
 
 #include <yoga/Yoga.h>
 
@@ -1118,13 +1119,107 @@ static float boundAxisWithAutoMin(
   return bounded;
 }
 
-// It distributes the free space to the flexible items and ensures that the size
-// of the flex items abide the min and max constraints. At the end of this
-// function the child nodes would have proper size. Prior using this function
-// please ensure that distributeFreeSpaceFirstPass is called.
+// Resolve growing items using CSS Flexbox §9.7. Undefined sizes are unfrozen;
+// once frozen, an item's target size is retained for the layout pass.
+static std::vector<float> distributeFreeSpaceForGrow(
+    const FlexLine& flexLine,
+    const Direction direction,
+    const FlexDirection mainAxis,
+    const float ownerWidth,
+    const float mainAxisOwnerSize,
+    const float availableInnerMainDim,
+    const float availableInnerWidth) {
+  std::vector<float> mainSizes(flexLine.itemsInFlow.size(), YGUndefined);
+  float remainingFreeSpace = flexLine.layout.remainingFreeSpace;
+  size_t unfrozenCount = 0;
+
+  for (size_t i = 0; i < flexLine.itemsInFlow.size(); i++) {
+    auto child = flexLine.itemsInFlow[i];
+    const float flexBasis = child->getLayout().computedFlexBasis.unwrap();
+    const float hypotheticalMainSize = boundAxisWithinMinAndMax(
+                                           child,
+                                           direction,
+                                           mainAxis,
+                                           child->getLayout().computedFlexBasis,
+                                           mainAxisOwnerSize,
+                                           ownerWidth)
+                                           .unwrap();
+    if (child->resolveFlexGrow() == 0 || flexBasis > hypotheticalMainSize) {
+      mainSizes[i] = hypotheticalMainSize;
+    } else {
+      // Line breaking uses hypothetical sizes; unfrozen items grow from their
+      // flex bases. Margins and gaps are already excluded from free space.
+      remainingFreeSpace += hypotheticalMainSize - flexBasis;
+      unfrozenCount++;
+    }
+  }
+  const float initialFreeSpace = remainingFreeSpace;
+
+  while (unfrozenCount > 0) {
+    float totalFlexGrowFactors = 0;
+    for (size_t i = 0; i < flexLine.itemsInFlow.size(); i++) {
+      if (yoga::isUndefined(mainSizes[i])) {
+        totalFlexGrowFactors += flexLine.itemsInFlow[i]->resolveFlexGrow();
+      }
+    }
+    const float freeSpace = totalFlexGrowFactors < 1
+        ? yoga::minOrDefined(
+              remainingFreeSpace, initialFreeSpace * totalFlexGrowFactors)
+        : remainingFreeSpace;
+    const float growUnit = freeSpace / totalFlexGrowFactors;
+    float totalViolation = 0;
+
+    for (size_t i = 0; i < flexLine.itemsInFlow.size(); i++) {
+      if (yoga::isUndefined(mainSizes[i])) {
+        auto child = flexLine.itemsInFlow[i];
+        const float mainSize = child->getLayout().computedFlexBasis.unwrap() +
+            growUnit * child->resolveFlexGrow();
+        totalViolation += boundAxisWithAutoMin(
+                              child,
+                              mainAxis,
+                              direction,
+                              mainSize,
+                              availableInnerMainDim,
+                              availableInnerWidth) -
+            mainSize;
+      }
+    }
+
+    for (size_t i = 0; i < flexLine.itemsInFlow.size(); i++) {
+      if (yoga::isUndefined(mainSizes[i])) {
+        auto child = flexLine.itemsInFlow[i];
+        const float flexBasis = child->getLayout().computedFlexBasis.unwrap();
+        const float mainSize = flexBasis + growUnit * child->resolveFlexGrow();
+        const float boundedSize = boundAxisWithAutoMin(
+            child,
+            mainAxis,
+            direction,
+            mainSize,
+            availableInnerMainDim,
+            availableInnerWidth);
+        const float violation = boundedSize - mainSize;
+        // Freeze only violations with the same sign as the total. Freezing
+        // both min and max violations can exhaust the factors prematurely.
+        if (yoga::isUndefined(totalViolation) || totalViolation == 0 ||
+            (totalViolation > 0 && violation > 0) ||
+            (totalViolation < 0 && violation < 0)) {
+          mainSizes[i] = boundedSize;
+          remainingFreeSpace -= boundedSize - flexBasis;
+          unfrozenCount--;
+        }
+      }
+    }
+  }
+
+  return mainSizes;
+}
+
+// Distribute free space and lay out each item. Corrected grow sizes are already
+// resolved; the legacy path requires distributeFreeSpaceFirstPass first.
 static float distributeFreeSpaceSecondPass(
     FlexLine& flexLine,
     yoga::Node* const node,
+    const std::vector<float>& flexGrowMainSizes,
     const FlexDirection mainAxis,
     const FlexDirection crossAxis,
     const Direction direction,
@@ -1147,7 +1242,8 @@ static float distributeFreeSpaceSecondPass(
   const bool isMainAxisRow = isRow(mainAxis);
   const bool isNodeFlexWrap = node->style().flexWrap() != Wrap::NoWrap;
 
-  for (auto currentLineChild : flexLine.itemsInFlow) {
+  for (size_t i = 0; i < flexLine.itemsInFlow.size(); i++) {
+    auto currentLineChild = flexLine.itemsInFlow[i];
     childFlexBasis = boundAxisWithinMinAndMax(
                          currentLineChild,
                          direction,
@@ -1158,7 +1254,10 @@ static float distributeFreeSpaceSecondPass(
                          .unwrap();
     float updatedMainSize = childFlexBasis;
 
-    if (yoga::isDefined(flexLine.layout.remainingFreeSpace) &&
+    if (!flexGrowMainSizes.empty()) {
+      updatedMainSize = flexGrowMainSizes[i];
+    } else if (
+        yoga::isDefined(flexLine.layout.remainingFreeSpace) &&
         flexLine.layout.remainingFreeSpace < 0) {
       flexShrinkScaledFactor =
           -currentLineChild->resolveFlexShrink() * childFlexBasis;
@@ -1442,8 +1541,8 @@ static void distributeFreeSpaceFirstPass(
   flexLine.layout.remainingFreeSpace -= deltaFreeSpace;
 }
 
-// Do two passes over the flex items to figure out how to distribute the
-// remaining space.
+// Growing items use the CSS freeze loop unless the legacy errata is enabled.
+// Otherwise, do two passes to figure out how to distribute the remaining space.
 //
 // The first pass finds the items whose min/max constraints trigger, freezes
 // them at those sizes, and excludes those sizes from the remaining space.
@@ -1453,8 +1552,8 @@ static void distributeFreeSpaceFirstPass(
 // the first pass. For the other items, it sets their sizes by forcing their
 // min/max constraints to trigger again.
 //
-// This two pass approach for resolving min/max constraints deviates from the
-// spec. The spec
+// This legacy two pass approach for resolving min/max constraints deviates from
+// the spec. The spec
 // (https://www.w3.org/TR/CSS-flexbox-1/#resolve-flexible-lengths) describes a
 // process that needs to be repeated a variable number of times. The algorithm
 // implemented here won't handle all cases but it was simpler to implement and
@@ -1507,21 +1606,35 @@ static void resolveFlexibleLength(
     }
   }
 
-  // First pass: detect the flex items whose min/max constraints trigger
-  distributeFreeSpaceFirstPass(
-      node,
-      flexLine,
-      direction,
-      mainAxis,
-      ownerWidth,
-      mainAxisOwnerSize,
-      availableInnerMainDim,
-      availableInnerWidth);
+  std::vector<float> flexGrowMainSizes;
+  if (originalFreeSpace > 0 &&
+      !node->hasErrata(Errata::FlexGrowFreeSpaceUsesClampedBasis)) {
+    flexGrowMainSizes = distributeFreeSpaceForGrow(
+        flexLine,
+        direction,
+        mainAxis,
+        ownerWidth,
+        mainAxisOwnerSize,
+        availableInnerMainDim,
+        availableInnerWidth);
+  } else {
+    // First pass: detect the flex items whose min/max constraints trigger
+    distributeFreeSpaceFirstPass(
+        node,
+        flexLine,
+        direction,
+        mainAxis,
+        ownerWidth,
+        mainAxisOwnerSize,
+        availableInnerMainDim,
+        availableInnerWidth);
+  }
 
-  // Second pass: resolve the sizes of the flexible items
+  // Lay out the flexible items using their resolved main sizes.
   const float distributedFreeSpace = distributeFreeSpaceSecondPass(
       flexLine,
       node,
+      flexGrowMainSizes,
       mainAxis,
       crossAxis,
       direction,
