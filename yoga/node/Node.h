@@ -195,14 +195,14 @@ class YG_EXPORT Node : public ::YGNode {
   }
 
   /**
-   * Whether the last layout of this node resolved a percentage against a
-   * height, on the node itself or on a descendant that takes part in its
-   * layout. Measurements of such a node depend on the available height even
-   * when they don't fill it. True until the node has been laid out, and again
-   * once it is dirtied.
+   * Whether the last layout of this node found a value, on the node itself or
+   * on a descendant that takes part in its layout, that is not known to be
+   * independent of the available height. A FitContent measurement of such a
+   * node may depend on the available height even when it doesn't fill it.
+   * True until the node has been laid out, and again once it is dirtied.
    */
-  bool resolvesHeightPercentage() const {
-    return resolvesHeightPercentage_;
+  bool mayDependOnAvailableHeight() const {
+    return mayDependOnAvailableHeight_;
   }
 
   Style::SizeLength getProcessedDimension(Dimension dimension) const {
@@ -243,8 +243,8 @@ class YG_EXPORT Node : public ::YGNode {
     hasNewLayout_ = hasNewLayout;
   }
 
-  void setResolvesHeightPercentage(bool resolvesHeightPercentage) {
-    resolvesHeightPercentage_ = resolvesHeightPercentage;
+  void setMayDependOnAvailableHeight(bool mayDependOnAvailableHeight) {
+    mayDependOnAvailableHeight_ = mayDependOnAvailableHeight;
   }
 
   void setNodeType(NodeType nodeType) {
@@ -358,7 +358,7 @@ class YG_EXPORT Node : public ::YGNode {
   bool isReferenceBaseline_ : 1 = false;
   bool isDirty_ : 1 = true;
   bool alwaysFormsContainingBlock_ : 1 = false;
-  bool resolvesHeightPercentage_ : 1 = true;
+  bool mayDependOnAvailableHeight_ : 1 = true;
   NodeType nodeType_ : bitCount<NodeType>() = NodeType::Default;
   void* context_ = nullptr;
   YGMeasureFunc measureFunc_ = nullptr;
