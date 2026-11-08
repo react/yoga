@@ -313,6 +313,58 @@ class YogaNodeTest {
     assertNull(node.data)
   }
 
+  @Test
+  fun testMeasuredNodeRoundsAsText() {
+    assertEquals(34, firstThirdWidth { it.setMeasureFunction(fillsWidth) })
+  }
+
+  @Test
+  fun testSetNodeTypeDefaultRoundsMeasuredNodeToNearest() {
+    assertEquals(
+        33,
+        firstThirdWidth {
+          it.setMeasureFunction(fillsWidth)
+          it.setNodeType(YogaNodeType.DEFAULT)
+        },
+    )
+  }
+
+  @Test
+  fun testSetMeasureFunctionResetsNodeTypeToText() {
+    assertEquals(
+        34,
+        firstThirdWidth {
+          it.setMeasureFunction(fillsWidth)
+          it.setNodeType(YogaNodeType.DEFAULT)
+          it.setMeasureFunction(fillsWidth)
+        },
+    )
+  }
+
+  /** No width of its own, so flexing gives it its third. */
+  private val fillsWidth = YogaMeasureFunction { _, _, _, _, _ -> YogaMeasureOutput.make(0f, 10f) }
+
+  /**
+   * The rounded width of the first of three nodes flexed to a third of a 100 wide row each, set up
+   * by [configure]: its right edge is at 33.33, which text rounding takes up to 34.
+   */
+  private fun firstThirdWidth(configure: (YogaNode) -> Unit): Int {
+    val root = createNode()
+    root.flexDirection = YogaFlexDirection.ROW
+    root.setWidth(100f)
+    root.setHeight(10f)
+    for (i in 0 until 3) {
+      val child = createNode()
+      child.flexGrow = 1f
+      if (i == 0) {
+        configure(child)
+      }
+      root.addChildAt(child, i)
+    }
+    root.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
+    return root.getChildAt(0).layoutWidth.toInt()
+  }
+
   private fun createNode(): YogaNode = mNodeFactory.create()
 
   private fun createNode(config: YogaConfig): YogaNode = mNodeFactory.create(config)

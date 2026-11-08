@@ -18,6 +18,19 @@ We actively welcome your pull requests.
 5. Ensure the test suite passes and `yarn lint` succeeds.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
+Yoga is also included in React Native. Add a `Changelog:` entry to your pull
+request description so user-visible Yoga changes can appear in React Native
+release notes. For example:
+
+```text
+Changelog:
+[General][Fixed] - Fix Yoga flex shrink producing oversized items when all children reach their minimum sizes
+```
+
+Use `Changelog: [Internal]` only for changes that do not affect users, such as
+tests or documentation. See the [React Native changelog guidelines](https://reactnative.dev/contributing/changelogs-in-pull-requests)
+for the available categories and types.
+
 `yarn format-check` checks all maintained JavaScript and documentation, C-family,
 Kotlin, and Python sources without modifying them. Running all formatters requires
 Node and Yarn, Java 17 or newer, and Python 3 with pip.

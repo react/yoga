@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <yoga/style/StyleValuePool.h>
+#include <array>
 
 namespace facebook::yoga {
 
@@ -141,6 +142,40 @@ TEST(StyleValuePool, store_keywords) {
   EXPECT_EQ(pool.getSize(handleMaxContent), StyleSizeLength::ofMaxContent());
   EXPECT_EQ(pool.getSize(handleFitContent), StyleSizeLength::ofFitContent());
   EXPECT_EQ(pool.getSize(handleStretch), StyleSizeLength::ofStretch());
+}
+
+TEST(StyleValuePool, store_keywords_after_large_int) {
+  StyleValuePool pool;
+  std::array<StyleValueHandle, 4> handles;
+
+  // Each handle takes its own pool slot, from 0 to 3
+  for (auto& handle : handles) {
+    pool.store(handle, StyleSizeLength::points(262144));
+  }
+
+  for (auto keyword :
+       {StyleSizeLength::ofMaxContent(),
+        StyleSizeLength::ofFitContent(),
+        StyleSizeLength::ofStretch()}) {
+    for (auto& handle : handles) {
+      pool.store(handle, keyword);
+      EXPECT_EQ(pool.getSize(handle), keyword);
+    }
+  }
+}
+
+TEST(StyleValuePool, store_large_int_and_keyword_repeatedly) {
+  StyleValuePool pool;
+  StyleValueHandle handle;
+
+  // The handle keeps its pool slot, so the pool must not grow on each store
+  for (int i = 0; i < 5000; i++) {
+    pool.store(handle, StyleSizeLength::points(262144));
+    pool.store(handle, StyleSizeLength::ofMaxContent());
+  }
+  pool.store(handle, StyleSizeLength::points(262144));
+
+  EXPECT_EQ(pool.getSize(handle), StyleSizeLength::points(262144));
 }
 
 } // namespace facebook::yoga
