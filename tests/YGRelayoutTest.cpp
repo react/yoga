@@ -284,6 +284,127 @@ TEST(
   YGConfigFree(config);
 }
 
+TEST(
+    YogaTest,
+    percent_row_gap_in_auto_container_relayout_on_root_height_change) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+
+  YGNodeRef container = YGNodeNewWithConfig(config);
+  YGNodeStyleSetGapPercent(container, YGGutterRow, 10);
+  YGNodeInsertChild(root, container, 0);
+
+  for (uint32_t i = 0; i < 2; i++) {
+    YGNodeRef child = YGNodeNewWithConfig(config);
+    YGNodeStyleSetHeight(child, 50);
+    YGNodeInsertChild(container, child, i);
+  }
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(120, YGNodeLayoutGetHeight(container));
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(122, YGNodeLayoutGetHeight(container));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+TEST(
+    YogaTest,
+    percent_height_under_display_contents_relayout_on_root_height_change) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+
+  YGNodeRef container = YGNodeNewWithConfig(config);
+  YGNodeInsertChild(root, container, 0);
+
+  // The height of a `display: contents` node doesn't apply; its child takes
+  // part in the container's layout.
+  YGNodeRef contents = YGNodeNewWithConfig(config);
+  YGNodeStyleSetDisplay(contents, YGDisplayContents);
+  YGNodeStyleSetHeight(contents, 10);
+  YGNodeInsertChild(container, contents, 0);
+
+  YGNodeRef child = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeightPercent(child, 50);
+  YGNodeInsertChild(contents, child, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(500, YGNodeLayoutGetHeight(container));
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(600, YGNodeLayoutGetHeight(container));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+TEST(
+    YogaTest,
+    partial_flex_grow_in_auto_column_relayout_on_root_height_change) {
+  // Under the StretchFlexBasis errata a column measured with a FitContent
+  // height hands its free space to children with flex grow, so a child with
+  // flex grow 0.5 takes half of it and the column depends on the available
+  // height without filling it.
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetErrata(config, YGErrataStretchFlexBasis);
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+
+  YGNodeRef container = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(container, 100);
+  YGNodeInsertChild(root, container, 0);
+
+  YGNodeRef child = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(child, 100);
+  YGNodeStyleSetFlexGrow(child, 0.5f);
+  YGNodeInsertChild(container, child, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const float before = YGNodeLayoutGetHeight(container);
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const float after = YGNodeLayoutGetHeight(container);
+
+  YGNodeRef freshRoot = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(freshRoot, YGFlexDirectionRow);
+  YGNodeStyleSetAlignItems(freshRoot, YGAlignFlexStart);
+  YGNodeStyleSetWidth(freshRoot, 400);
+  YGNodeStyleSetHeight(freshRoot, 1200);
+  YGNodeRef freshContainer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(freshContainer, 100);
+  YGNodeInsertChild(freshRoot, freshContainer, 0);
+  YGNodeRef freshChild = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(freshChild, 100);
+  YGNodeStyleSetFlexGrow(freshChild, 0.5f);
+  YGNodeInsertChild(freshContainer, freshChild, 0);
+  YGNodeCalculateLayout(freshRoot, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  ASSERT_NE(before, after);
+  ASSERT_FLOAT_EQ(YGNodeLayoutGetHeight(freshContainer), after);
+
+  YGNodeFreeRecursive(root);
+  YGNodeFreeRecursive(freshRoot);
+
+  YGConfigFree(config);
+}
+
 TEST(YogaTest, percent_padding_follows_owner_size_on_relayout) {
   YGConfigRef config = YGConfigNew();
 
