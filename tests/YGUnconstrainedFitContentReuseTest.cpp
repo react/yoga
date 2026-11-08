@@ -15,8 +15,7 @@
 // Two vocabularies are used. Together they cover the values the reuse looks
 // at; apart, each stays within what the layout caches already kept consistent
 // before the reuse existed (flex bases, min/max heights, percent margins and
-// positions combine into stale layouts that are not the subject of this
-// test).
+// padding combine into stale layouts that are not the subject of this test).
 
 #include <gtest/gtest.h>
 #include <yoga/Yoga.h>
@@ -51,22 +50,19 @@ struct Vocabulary {
   bool overflow = true;
 };
 
-// Columns with percent and keyword sizes, flex grow and shrink, padding,
-// positions and text.
+// Columns with percent and keyword sizes, flex grow and shrink, aspect
+// ratios, positions, text and alignment.
 constexpr Vocabulary kColumnsWithPercentSizes = {
     .rows = false,
-    .minWidth = false,
     .flexBasis = false,
     .minMaxHeight = false,
+    .padding = false,
     .margin = false,
     .flex = false,
-    .aspectRatio = false,
-    .alignSelf = false,
-    .overflow = false,
 };
 
-// Rows and columns with percent and keyword sizes, `flex`, aspect ratios,
-// text and overflow.
+// Rows and columns with percent and keyword sizes, flex grow and shrink,
+// `flex`, aspect ratios, text and overflow.
 constexpr Vocabulary kRowsWithPercentSizes = {
     .minWidth = false,
     .flexBasis = false,
@@ -74,30 +70,32 @@ constexpr Vocabulary kRowsWithPercentSizes = {
     .maxWidth = false,
     .padding = false,
     .margin = false,
-    .grow = false,
     .position = false,
     .alignItems = false,
     .alignSelf = false,
 };
 
+// The engine's output is specified by the standard; the distributions are
+// not, and differ between standard libraries, so they are not used: the same
+// seed must build the same tree everywhere.
 class Random {
  public:
   explicit Random(uint32_t seed) : engine_(seed) {}
 
   // In [0, n).
   uint32_t below(uint32_t n) {
-    return std::uniform_int_distribution<uint32_t>(0, n - 1)(engine_);
+    return static_cast<uint32_t>(engine_() % n);
   }
 
   bool chance(uint32_t percent) {
     return below(100) < percent;
   }
 
+  // Whole points keep the comparison free of accumulated rounding noise that
+  // has nothing to do with the cache.
   float points(float min, float max) {
-    // Whole points keep the comparison free of accumulated rounding noise
-    // that has nothing to do with the cache.
-    return static_cast<float>(std::uniform_int_distribution<int>(
-        static_cast<int>(min), static_cast<int>(max))(engine_));
+    return min +
+        static_cast<float>(below(static_cast<uint32_t>(max - min) + 1));
   }
 
   template <typename T>
