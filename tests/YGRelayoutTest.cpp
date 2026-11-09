@@ -306,6 +306,216 @@ TEST(YogaTest, percent_min_width_follows_owner_size_on_relayout) {
   YGConfigFree(config);
 }
 
+// The flex steps resolve the min and max main size of a flex item against the
+// size of its container's owner. A container of fixed size, whose own layout
+// would otherwise be reused, has to be laid out again when that owner's size
+// changes.
+
+TEST(YogaTest, flex_item_percent_min_height_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetMinHeightPercent(root_child0_child0, 50);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeStyleSetHeight(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0));
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_item_percent_max_height_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0, 500);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetMaxHeightPercent(root_child0_child0, 50);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeRef root_child0_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0_child0_child0, 400);
+  YGNodeInsertChild(root_child0_child0, root_child0_child0_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeStyleSetHeight(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+TEST(YogaTest, flex_item_percent_min_width_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root_child0, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetMinWidthPercent(root_child0_child0, 50);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child0));
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child0_child0));
+
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetWidth(root_child0));
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetWidth(root_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+TEST(
+    YogaTest,
+    flex_item_percent_min_height_under_display_contents_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetDisplay(root_child0_child0, YGDisplayContents);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeRef root_child0_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetMinHeightPercent(root_child0_child0_child0, 50);
+  YGNodeInsertChild(root_child0_child0, root_child0_child0_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0_child0_child0));
+
+  YGNodeStyleSetHeight(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(100, YGNodeLayoutGetHeight(root_child0_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+// A content-box item adds its padding to its min size, and the flex steps
+// resolve that padding against the width of the container's owner.
+TEST(
+    YogaTest,
+    content_box_flex_item_percent_padding_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeStyleSetHeight(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetBoxSizing(root_child0_child0, YGBoxSizingContentBox);
+  YGNodeStyleSetMinHeight(root_child0_child0, 10);
+  YGNodeStyleSetPaddingPercent(root_child0_child0, YGEdgeTop, 10);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(20, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(30, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
+static YGSize measureFixedContent(
+    YGNodeConstRef /*node*/,
+    float /*width*/,
+    YGMeasureMode /*widthMode*/,
+    float /*height*/,
+    YGMeasureMode /*heightMode*/) {
+  return YGSize{10, 80};
+}
+
+// The automatic minimum size of an item is the smaller of its content size
+// and its specified size, which is resolved the same way.
+TEST(YogaTest, flex_item_auto_min_height_follows_owner_size_on_relayout) {
+  YGConfigRef config = YGConfigNew();
+  YGConfigSetErrata(config, YGErrataNone);
+
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0, 100);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeightPercent(root_child0_child0, 50);
+  YGNodeStyleSetFlexShrink(root_child0_child0, 1);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  YGNodeRef root_child0_child0_child0 = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(root_child0_child0_child0, measureFixedContent);
+  YGNodeInsertChild(root_child0_child0, root_child0_child0_child0, 0);
+
+  YGNodeRef root_child0_child1 = YGNodeNewWithConfig(config);
+  YGNodeStyleSetHeight(root_child0_child1, 100);
+  YGNodeInsertChild(root_child0, root_child0_child1, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(50, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeStyleSetHeight(root, 60);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_FLOAT_EQ(30, YGNodeLayoutGetHeight(root_child0_child0));
+
+  YGNodeFreeRecursive(root);
+
+  YGConfigFree(config);
+}
+
 TEST(YogaTest, percent_min_height_follows_owner_size_on_relayout) {
   YGConfigRef config = YGConfigNew();
 
