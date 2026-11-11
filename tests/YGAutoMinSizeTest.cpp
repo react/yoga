@@ -658,6 +658,87 @@ TEST(YogaAutoMinSize, min_content_reprobed_on_next_layout) {
   EXPECT_FLOAT_EQ(40.0f, YGNodeLayoutGetWidth(row.text));
 }
 
+// The floor only matters for an item that grows or shrinks, so a line with
+// spare room and no growing items never probes its children.
+TEST(YogaAutoMinSize, line_with_free_space_skips_min_content_probe) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeStyleSetHeight(root, 50);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(text, measureWordWrappingText);
+  YGNodeSetMinContentMeasureFunc(text, measureMinContentWord);
+  YGNodeStyleSetFlexGrow(text, 0);
+  YGNodeInsertChild(root, text, 0);
+
+  gMinContentCalls = 0;
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  EXPECT_EQ(gMinContentCalls, 0);
+  EXPECT_FLOAT_EQ(kNaturalWidth, YGNodeLayoutGetWidth(text));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
+// In an overflowing line, only the items that shrink are floored, so an item
+// with `flex-shrink: 0` is never probed.
+TEST(YogaAutoMinSize, non_shrinking_item_skips_min_content_probe) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 50);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(text, measureWordWrappingText);
+  YGNodeSetMinContentMeasureFunc(text, measureMinContentWord);
+  YGNodeStyleSetFlexBasis(text, kNaturalWidth);
+  YGNodeStyleSetFlexShrink(text, 0);
+  YGNodeInsertChild(root, text, 0);
+
+  YGNodeRef spacer = YGNodeNewWithConfig(config);
+  YGNodeStyleSetWidth(spacer, 50);
+  YGNodeStyleSetFlexShrink(spacer, 1);
+  YGNodeInsertChild(root, spacer, 1);
+
+  gMinContentCalls = 0;
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  EXPECT_EQ(gMinContentCalls, 0);
+  EXPECT_FLOAT_EQ(kNaturalWidth, YGNodeLayoutGetWidth(text));
+  EXPECT_FLOAT_EQ(10.0f, YGNodeLayoutGetWidth(spacer));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
+// A column with no definite height has no free space to distribute, so its
+// children are never probed.
+TEST(YogaAutoMinSize, column_without_definite_height_skips_min_content_probe) {
+  YGConfigRef config = makeWebConfig(/*useAutoMinSize=*/true);
+  YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirectionColumn);
+  YGNodeStyleSetWidth(root, 200);
+
+  YGNodeRef text = YGNodeNewWithConfig(config);
+  YGNodeSetMeasureFunc(text, measureWordWrappingText);
+  YGNodeSetMinContentMeasureFunc(text, measureMinContentWord);
+  YGNodeStyleSetFlexShrink(text, 1);
+  YGNodeInsertChild(root, text, 0);
+
+  gMinContentCalls = 0;
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  EXPECT_EQ(gMinContentCalls, 0);
+  EXPECT_FLOAT_EQ(kLineHeight, YGNodeLayoutGetHeight(text));
+
+  YGNodeFreeRecursive(root);
+  YGConfigFree(config);
+}
+
 // Static min-content getter / setter round-trip smoke test.
 TEST(YogaAutoMinSize, static_min_content_getter_setter_round_trip) {
   YGNodeRef node = YGNodeNew();
