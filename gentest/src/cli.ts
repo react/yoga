@@ -116,6 +116,7 @@ async function processFixture(fixturePath: string): Promise<void> {
     rtlLayout: rtlTree[i],
     experiments: ltrNode.experiments,
     disabled: ltrNode.disabled,
+    errata: ltrNode.errata,
   }));
 
   const cppCode = new CppEmitter().generateFixture(

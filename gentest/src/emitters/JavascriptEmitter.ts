@@ -135,11 +135,15 @@ export class JavascriptEmitter extends Emitter {
     name: string,
     experiments: string[],
     disabled: boolean,
+    errata: string | null,
   ): void {
     const testFn = disabled ? 'test.skip' : 'test';
     this.push(`${testFn}('${name}', () => {`);
     this.pushIndent();
     this.push('const config = Yoga.Config.create();');
+    if (errata != null) {
+      this.push(`config.setErrata(Errata.${errata});`);
+    }
     this.push('');
 
     if (experiments.length > 0) {

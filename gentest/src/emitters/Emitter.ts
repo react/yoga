@@ -20,6 +20,7 @@ interface TestCase {
   rtlLayout: LayoutNode;
   experiments: string[];
   disabled: boolean;
+  errata: string | null;
 }
 
 /**
@@ -70,6 +71,7 @@ export default abstract class Emitter {
     name: string,
     experiments: string[],
     disabled: boolean,
+    errata: string | null,
   ): void;
   abstract emitTestEpilogue(experiments: string[]): void;
   abstract emitTestTreePrologue(nodeName: string): void;
@@ -138,6 +140,7 @@ export default abstract class Emitter {
         testCase.name,
         testCase.experiments,
         testCase.disabled,
+        testCase.errata,
       );
 
       this.setupTestTree(ltrTree, 'root', null, undefined);
