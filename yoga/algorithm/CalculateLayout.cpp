@@ -2958,7 +2958,11 @@ bool calculateLayoutInternal(
     }
   }
 
-  if (performLayout) {
+  // Cached roots retain their rounded layout. Cached descendants still need
+  // unrounded dimensions for the root's pixel-grid rounding pass.
+  if (performLayout &&
+      (depth > 1 || needToVisitNode ||
+       cachedResults != &layout->cachedLayout)) {
     node->setLayoutDimension(
         node->getLayout().measuredDimension(Dimension::Width),
         Dimension::Width);
