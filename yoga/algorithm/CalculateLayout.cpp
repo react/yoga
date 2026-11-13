@@ -35,7 +35,119 @@
 
 namespace facebook::yoga {
 
+// Margin used to tell an unconstrained FitContent measurement from one that
+// filled its available size.
+constexpr float kUnconstrainedEpsilon = 0.5f;
+
 constinit std::atomic<uint32_t> gCurrentGenerationCount(0);
+
+// Only values known not to read the available height are accepted below, so
+// any other value, including one added to Yoga later, turns the reuse of an
+// unconstrained FitContent measurement off instead of producing a stale size.
+
+// A height in percent resolves against the owner's height; keywords such as
+// stretch or fit-content read the available height.
+static bool heightIsIndependentOfAvailableHeight(
+    const Style::SizeLength& length) {
+  return length.isUndefined() || length.isAuto() || length.isPoints();
+}
+
+static bool heightBoundIsIndependentOfAvailableHeight(
+    const Style::SizeLength& length) {
+  return length.isUndefined() || length.isPoints();
+}
+
+// A row gap resolves against the available height, as the main gap of a
+// column or the cross gap of a row. Column gaps resolve against the width.
+static bool rowGapIsIndependentOfAvailableHeight(const Style& style) {
+  for (const auto gutter : {Gutter::Row, Gutter::All}) {
+    const auto gap = style.gap(gutter);
+    if (!(gap.isUndefined() || gap.isPoints())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool mayDependOnAvailableHeight(const yoga::Node* node);
+
+// Whether a child taking part in `node`'s layout may read the available
+// height. Children are read from the flags their own layouts left behind.
+// `display: contents` children are not laid out themselves and their style
+// doesn't apply, so their children are looked at instead; absolutely
+// positioned children don't affect the node's size.
+static bool anyLayoutChildMayDependOnAvailableHeight(const yoga::Node* node) {
+  for (const auto* child : node->getChildren()) {
+    if (child->style().positionType() == PositionType::Absolute) {
+      continue;
+    }
+    switch (child->style().display()) {
+      case Display::None:
+        break;
+      case Display::Contents:
+        if (anyLayoutChildMayDependOnAvailableHeight(child)) {
+          return true;
+        }
+        break;
+      default:
+        if (child->mayDependOnAvailableHeight()) {
+          return true;
+        }
+        break;
+    }
+  }
+  return false;
+}
+
+// Whether a FitContent measurement of `node` may depend on its available
+// height even when it doesn't fill it: a value on the node itself, or on a
+// descendant that takes part in its layout, that is not known to be
+// independent of that height. Below a node with a definite height (in points,
+// or from an aspect ratio and a defined width) values resolve against that
+// height, so its descendants are not looked at.
+static bool mayDependOnAvailableHeight(const yoga::Node* node) {
+  const auto& style = node->style();
+  if (!heightIsIndependentOfAvailableHeight(
+          style.dimension(Dimension::Height)) ||
+      !heightBoundIsIndependentOfAvailableHeight(
+          style.minDimension(Dimension::Height)) ||
+      !heightBoundIsIndependentOfAvailableHeight(
+          style.maxDimension(Dimension::Height)) ||
+      !heightIsIndependentOfAvailableHeight(style.flexBasis()) ||
+      !rowGapIsIndependentOfAvailableHeight(style)) {
+    return true;
+  }
+  switch (style.display()) {
+    case Display::Flex:
+    case Display::None:
+    case Display::Contents:
+      break;
+    default:
+      // Grid tracks can size against the available height.
+      return true;
+  }
+  if (style.dimension(Dimension::Height).isPoints() ||
+      (style.aspectRatio().isDefined() &&
+       (style.dimension(Dimension::Width).isPoints() ||
+        style.dimension(Dimension::Width).isPercent()))) {
+    return false;
+  }
+  if (isColumn(style.flexDirection())) {
+    // Lines of a wrapping column break on the available height, and a child
+    // with flex grow takes a share of the free space in it: under the
+    // StretchFlexBasis errata, or when the node itself grows, the column can
+    // grow into part of its available height without filling it.
+    if (style.flexWrap() != Wrap::NoWrap) {
+      return true;
+    }
+    for (const auto* child : node->getLayoutChildren()) {
+      if (child->resolveFlexGrow() > 0.0f) {
+        return true;
+      }
+    }
+  }
+  return anyLayoutChildMayDependOnAvailableHeight(node);
+}
 
 static bool hasAutoHorizontalMargin(const Style& style) {
   for (const auto direction : {Direction::LTR, Direction::RTL}) {
@@ -2895,6 +3007,33 @@ bool calculateLayoutInternal(
         break;
       }
     }
+    // A FitContent height that did not constrain an earlier measurement (the
+    // measured height plus margin stayed below it) does not change the result
+    // as long as the new available height still fits that measured height.
+    // Content in a scroll view is measured with the container's growing
+    // height, so without this every clean child misses the cache whenever the
+    // content gets taller. That doesn't hold if anything in the subtree may
+    // read the available height.
+    if (cachedResults == nullptr && !node->mayDependOnAvailableHeight() &&
+        heightSizingMode == SizingMode::FitContent &&
+        yoga::isDefined(availableHeight)) {
+      const float marginColumn =
+          node->style().computeMarginForAxis(FlexDirection::Column, ownerWidth);
+      for (uint32_t i = 0; i < layout->nextCachedMeasurementsIndex; i++) {
+        const auto& cached = layout->cachedMeasurements[i];
+        if (cached.widthSizingMode == widthSizingMode &&
+            yoga::inexactEquals(cached.availableWidth, availableWidth) &&
+            cached.heightSizingMode == SizingMode::FitContent &&
+            yoga::isDefined(cached.availableHeight) &&
+            cached.computedHeight + marginColumn <
+                cached.availableHeight - kUnconstrainedEpsilon &&
+            cached.computedHeight + marginColumn <= availableHeight &&
+            isCachedForOwnerSize(node, cached, ownerWidth, ownerHeight)) {
+          cachedResults = &layout->cachedMeasurements[i];
+          break;
+        }
+      }
+    }
   }
 
   if (!needToVisitNode && cachedResults != nullptr) {
@@ -2923,6 +3062,7 @@ bool calculateLayoutInternal(
 
     layout->lastOwnerDirection = ownerDirection;
     layout->configVersion = node->getConfig()->getVersion();
+    node->setMayDependOnAvailableHeight(mayDependOnAvailableHeight(node));
 
     if (cachedResults == nullptr) {
       layoutMarkerData.maxMeasureCache = std::max(

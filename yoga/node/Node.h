@@ -194,6 +194,17 @@ class YG_EXPORT Node : public ::YGNode {
     return isDirty_;
   }
 
+  /**
+   * Whether the last layout of this node found a value, on the node itself or
+   * on a descendant that takes part in its layout, that is not known to be
+   * independent of the available height. A FitContent measurement of such a
+   * node may depend on the available height even when it doesn't fill it.
+   * True until the node has been laid out, and again once it is dirtied.
+   */
+  bool mayDependOnAvailableHeight() const {
+    return mayDependOnAvailableHeight_;
+  }
+
   Style::SizeLength getProcessedDimension(Dimension dimension) const {
     return processedDimensions_[static_cast<size_t>(dimension)];
   }
@@ -230,6 +241,10 @@ class YG_EXPORT Node : public ::YGNode {
 
   void setHasNewLayout(bool hasNewLayout) {
     hasNewLayout_ = hasNewLayout;
+  }
+
+  void setMayDependOnAvailableHeight(bool mayDependOnAvailableHeight) {
+    mayDependOnAvailableHeight_ = mayDependOnAvailableHeight;
   }
 
   void setNodeType(NodeType nodeType) {
@@ -343,6 +358,7 @@ class YG_EXPORT Node : public ::YGNode {
   bool isReferenceBaseline_ : 1 = false;
   bool isDirty_ : 1 = true;
   bool alwaysFormsContainingBlock_ : 1 = false;
+  bool mayDependOnAvailableHeight_ : 1 = true;
   NodeType nodeType_ : bitCount<NodeType>() = NodeType::Default;
   void* context_ = nullptr;
   YGMeasureFunc measureFunc_ = nullptr;

@@ -227,6 +227,99 @@ TEST_F(EventTest, layout_events_counts_cache_hits_multi_node_layout) {
   ASSERT_EQ(layoutData.cachedMeasures, 4);
 }
 
+TEST_F(EventTest, unconstrained_fit_content_height_measure_is_reused) {
+  // A child measured with a FitContent height that does not constrain it
+  // (e.g. a row in a scroll view's content, whose height grows) keeps its
+  // cached measurement when only that available height changes.
+  auto root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+  auto container = YGNodeNew();
+  YGNodeInsertChild(root, container, 0);
+  auto content = YGNodeNew();
+  YGNodeStyleSetHeight(content, 50);
+  YGNodeInsertChild(container, content, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  LayoutData layoutData =
+      lastEvent().eventTestData<Event::LayoutPassEnd>().layoutData;
+
+  ASSERT_EQ(layoutData.measures, 0);
+  ASSERT_EQ(YGNodeLayoutGetHeight(container), 50);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST_F(EventTest, percent_height_under_definite_height_measure_is_reused) {
+  // A percentage below a node with a definite height resolves against that
+  // height, not against the available height of the measured container.
+  auto root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+  auto container = YGNodeNew();
+  YGNodeInsertChild(root, container, 0);
+  auto fixedBox = YGNodeNew();
+  YGNodeStyleSetHeight(fixedBox, 50);
+  YGNodeInsertChild(container, fixedBox, 0);
+  auto fixedBoxChild = YGNodeNew();
+  YGNodeStyleSetHeightPercent(fixedBoxChild, 100);
+  YGNodeInsertChild(fixedBox, fixedBoxChild, 0);
+  auto aspectRatioBox = YGNodeNew();
+  YGNodeStyleSetWidthPercent(aspectRatioBox, 100);
+  YGNodeStyleSetAspectRatio(aspectRatioBox, 4);
+  YGNodeInsertChild(container, aspectRatioBox, 1);
+  auto aspectRatioBoxChild = YGNodeNew();
+  YGNodeStyleSetHeightPercent(aspectRatioBoxChild, 100);
+  YGNodeInsertChild(aspectRatioBox, aspectRatioBoxChild, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  LayoutData layoutData =
+      lastEvent().eventTestData<Event::LayoutPassEnd>().layoutData;
+
+  ASSERT_EQ(layoutData.measures, 0);
+  ASSERT_EQ(YGNodeLayoutGetHeight(container), 150);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST_F(EventTest, absolute_percent_height_child_measure_is_reused) {
+  // An absolutely positioned child doesn't affect the container's size.
+  auto root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 400);
+  YGNodeStyleSetHeight(root, 1000);
+  auto container = YGNodeNew();
+  YGNodeInsertChild(root, container, 0);
+  auto content = YGNodeNew();
+  YGNodeStyleSetHeight(content, 50);
+  YGNodeInsertChild(container, content, 0);
+  auto overlay = YGNodeNew();
+  YGNodeStyleSetPositionType(overlay, YGPositionTypeAbsolute);
+  YGNodeStyleSetHeightPercent(overlay, 100);
+  YGNodeInsertChild(container, overlay, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  YGNodeStyleSetHeight(root, 1200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  LayoutData layoutData =
+      lastEvent().eventTestData<Event::LayoutPassEnd>().layoutData;
+
+  ASSERT_EQ(layoutData.measures, 0);
+  ASSERT_EQ(YGNodeLayoutGetHeight(container), 50);
+  ASSERT_EQ(YGNodeLayoutGetHeight(overlay), 50);
+
+  YGNodeFreeRecursive(root);
+}
+
 TEST_F(EventTest, layout_events_has_max_measure_cache) {
   auto root = YGNodeNew();
   auto a = YGNodeNew();
