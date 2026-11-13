@@ -52,8 +52,8 @@ export default async function buildLayoutTree(
         var child = parent.children[i];
         var rect = child.getBoundingClientRect();
         var size = getRoundedSize(child);
-        var left = Math.round(rect.left - parentLeft);
-        var top = Math.round(rect.top - parentTop);
+        var left = Math.round(rect.left) - Math.round(parentLeft);
+        var top = Math.round(rect.top) - Math.round(parentTop);
 
         var innerText = '';
         if (child.children.length === 0 && child.innerText) {
