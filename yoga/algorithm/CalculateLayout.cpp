@@ -2498,6 +2498,38 @@ static void calculateLayoutImpl(
           continue;
         }
         if (child->style().positionType() != PositionType::Absolute) {
+          const bool startMarginIsAuto =
+              child->style().flexStartMarginIsAuto(crossAxis, direction);
+          const bool endMarginIsAuto =
+              child->style().flexEndMarginIsAuto(crossAxis, direction);
+          if (startMarginIsAuto || endMarginIsAuto) {
+            const bool isWrapReverse =
+                node->style().flexWrap() == Wrap::WrapReverse;
+            // Auto margins consume the line's free space before alignment and
+            // prevent stretching. A non-wrapping line fills the cross axis.
+            const float remainingCrossDim = yoga::maxOrDefined(
+                0.0f,
+                (isNodeFlexWrap ? lineHeight : innerCrossDim) -
+                    child->dimensionWithMargin(crossAxis, availableInnerWidth));
+            const bool leadingMarginIsAuto =
+                isWrapReverse ? endMarginIsAuto : startMarginIsAuto;
+            const float autoMargin = leadingMarginIsAuto ? remainingCrossDim /
+                    (startMarginIsAuto && endMarginIsAuto ? 2.0f : 1.0f)
+                                                         : 0.0f;
+            const float leadingMargin = isWrapReverse
+                ? child->style().computeFlexEndMargin(
+                      crossAxis, direction, availableInnerWidth)
+                : child->style().computeFlexStartMargin(
+                      crossAxis, direction, availableInnerWidth);
+            const float relativePosition = child->relativePosition(
+                crossAxis, direction, availableInnerCrossDim);
+            // Wrap-reverse mirrors this position after computing dimensions.
+            child->setLayoutPosition(
+                currentLead + leadingMargin + autoMargin +
+                    (isWrapReverse ? -relativePosition : relativePosition),
+                flexStartEdge(crossAxis));
+            continue;
+          }
           switch (resolveChildAlignment(node, child)) {
             case Align::Start:
             case Align::End:
