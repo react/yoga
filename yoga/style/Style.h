@@ -358,6 +358,11 @@ class YG_EXPORT Style {
         maxDimensions_[yoga::to_underlying(Dimension::Height)].isPercent();
   }
 
+  bool minOrMaxDimensionIsPercent(Dimension axis) const {
+    return minDimensions_[yoga::to_underlying(axis)].isPercent() ||
+        maxDimensions_[yoga::to_underlying(axis)].isPercent();
+  }
+
   FloatOptional aspectRatio() const {
     return pool_.getNumber(aspectRatio_);
   }

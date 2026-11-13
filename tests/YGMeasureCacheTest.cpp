@@ -221,3 +221,40 @@ TEST(YogaTest, remeasure_when_owner_resizes_with_percent_padding) {
 
   YGNodeFreeRecursive(root);
 }
+
+TEST(
+    YogaTest,
+    keep_cached_layout_when_owner_resizes_with_percent_sized_flex_item) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetWidth(root, 100);
+  YGNodeStyleSetHeight(root, 100);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  YGNodeStyleSetWidth(root_child0, 50);
+  YGNodeStyleSetHeight(root_child0, 50);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child0_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0_child0, _measureMax);
+  YGNodeInsertChild(root_child0, root_child0_child0, 0);
+
+  // These percentages resolve against the container, not against its owner.
+  YGNodeRef root_child0_child1 = YGNodeNew();
+  YGNodeStyleSetWidthPercent(root_child0_child1, 50);
+  YGNodeStyleSetHeightPercent(root_child0_child1, 50);
+  YGNodeInsertChild(root_child0, root_child0_child1, 1);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  const int measuresBeforeResize = measureCount;
+
+  YGNodeStyleSetWidth(root, 200);
+  YGNodeStyleSetHeight(root, 200);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(measuresBeforeResize, measureCount);
+  ASSERT_FLOAT_EQ(25, YGNodeLayoutGetWidth(root_child0_child1));
+  ASSERT_FLOAT_EQ(25, YGNodeLayoutGetHeight(root_child0_child1));
+
+  YGNodeFreeRecursive(root);
+}

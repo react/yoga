@@ -2763,17 +2763,70 @@ static void calculateLayoutImpl(
 //  Input parameters are the same as calculateLayoutImpl (see above)
 //  Return parameter is true if layout was performed, false if skipped
 //
+// The flex steps bound the flex basis of each item by the item's min and max
+// size on the main axis, and resolve those against the size of the container's
+// owner (and, for a content-box item, its padding against that owner's width)
+// rather than against the container. A percentage among them makes the
+// container's layout follow its owner's size, just as a percentage in its own
+// style does. The automatic minimum size of an item resolves the item's main
+// size the same way.
+static bool flexItemsResolveAgainstOwnerSize(
+    const yoga::Node* const node,
+    const bool againstOwnerWidth,
+    const bool againstOwnerHeight) {
+  const Dimension mainDimension = dimension(node->style().flexDirection());
+  const bool againstOwnerMainSize = mainDimension == Dimension::Width
+      ? againstOwnerWidth
+      : againstOwnerHeight;
+  if (!againstOwnerMainSize && !againstOwnerWidth) {
+    return false;
+  }
+  const bool hasAutoMinSize =
+      !node->hasErrata(Errata::MinSizeUndefinedInsteadOfAuto);
+
+  for (const auto* child : node->getLayoutChildren()) {
+    const auto& style = child->style();
+    if (style.display() == Display::None ||
+        style.positionType() == PositionType::Absolute) {
+      continue;
+    }
+
+    if (againstOwnerMainSize &&
+        (style.minOrMaxDimensionIsPercent(mainDimension) ||
+         (hasAutoMinSize && style.dimension(mainDimension).isPercent()))) {
+      return true;
+    }
+    if (againstOwnerWidth && style.boxSizing() == BoxSizing::ContentBox &&
+        (style.minDimension(mainDimension).isDefined() ||
+         style.maxDimension(mainDimension).isDefined()) &&
+        style.resolvesAgainstOwnerWidth()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // A cached result holds only for the owner size it was computed against when
-// the node's style resolves a percentage against that size.
+// the node's style, or the way it sizes its flex items, resolves a percentage
+// against that size.
 static bool isCachedForOwnerSize(
     const yoga::Node* const node,
     const CachedMeasurement& cachedMeasurement,
     const float ownerWidth,
     const float ownerHeight) {
-  return (!node->style().resolvesAgainstOwnerWidth() ||
-          yoga::inexactEquals(cachedMeasurement.ownerWidth, ownerWidth)) &&
-      (!node->style().resolvesAgainstOwnerHeight() ||
-       yoga::inexactEquals(cachedMeasurement.ownerHeight, ownerHeight));
+  const bool ownerWidthChanged =
+      !yoga::inexactEquals(cachedMeasurement.ownerWidth, ownerWidth);
+  const bool ownerHeightChanged =
+      !yoga::inexactEquals(cachedMeasurement.ownerHeight, ownerHeight);
+  if (!ownerWidthChanged && !ownerHeightChanged) {
+    return true;
+  }
+
+  const auto& style = node->style();
+  return !(ownerWidthChanged && style.resolvesAgainstOwnerWidth()) &&
+      !(ownerHeightChanged && style.resolvesAgainstOwnerHeight()) &&
+      !flexItemsResolveAgainstOwnerSize(
+          node, ownerWidthChanged, ownerHeightChanged);
 }
 
 bool calculateLayoutInternal(
