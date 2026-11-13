@@ -281,6 +281,81 @@ export default function wrapAssembly(lib: any): Yoga {
   lib._yogaMeasureFuncs = new Map();
   lib._yogaDirtiedFuncs = new Map();
 
+  // A dirtied function runs while Yoga marks nodes dirty, deep inside
+  // WebAssembly. An exception must not unwind those frames: the stack pointer
+  // would not be restored and the nodes above would not be marked dirty. So
+  // the bridge holds the first exception, and the call that marked the nodes
+  // dirty rethrows it once it returns. These calls are wrapped only while at
+  // least one dirtied function is set.
+  let pendingDirtiedError: {error: unknown} | null = null;
+
+  // Set by a wrapped call that returned and then rethrew a dirtied function's
+  // error, so the caller knows Yoga finished the change. insertChild and
+  // removeChild reset it before each call and read it when the call throws.
+  let dirtiedErrorAfterReturn = false;
+
+  const dirtyingCalls = [
+    '_YGNodeInsertChild',
+    '_YGNodeRemoveChild',
+    '_YGNodeMarkDirty',
+    '_YGNodeCopyStyle',
+    '_YGNodeSetIsReferenceBaseline',
+    ...Object.keys(lib).filter(name => name.startsWith('_YGNodeStyleSet')),
+  ];
+  const unwrappedCalls = new Map<string, (...args: unknown[]) => unknown>();
+
+  function rethrowDirtiedErrorAfter(call: (...args: unknown[]) => unknown) {
+    return (...args: unknown[]) => {
+      // A call made from inside a dirtied function keeps its own error apart
+      // from the one held for the call that is still running.
+      const outerError = pendingDirtiedError;
+      pendingDirtiedError = null;
+      let result: unknown;
+      try {
+        result = call(...args);
+      } catch (e) {
+        pendingDirtiedError = outerError;
+        dirtiedErrorAfterReturn = false;
+        throw e;
+      }
+      const ownError = pendingDirtiedError;
+      pendingDirtiedError = outerError;
+      if (ownError !== null) {
+        dirtiedErrorAfterReturn = true;
+        throw ownError.error;
+      }
+      return result;
+    };
+  }
+
+  function updateDirtyingCallWrappers(): void {
+    const wrapped = unwrappedCalls.size > 0;
+    const needed = lib._yogaDirtiedFuncs.size > 0;
+    if (needed === wrapped) return;
+    if (needed) {
+      for (const name of dirtyingCalls) {
+        unwrappedCalls.set(name, lib[name]);
+        lib[name] = rethrowDirtiedErrorAfter(lib[name]);
+      }
+    } else {
+      for (const [name, call] of unwrappedCalls) lib[name] = call;
+      unwrappedCalls.clear();
+    }
+  }
+
+  function attachChild(parent: NodeImpl, child: NodeImpl, index: number) {
+    parent._children.splice(index, 0, child);
+    child._parent = parent;
+  }
+
+  function detachChild(parent: NodeImpl, child: NodeImpl) {
+    const idx = parent._children.indexOf(child);
+    if (idx !== -1) {
+      parent._children.splice(idx, 1);
+    }
+    child._parent = null;
+  }
+
   function readYGValue(): Value {
     return {
       value: lib.HEAPF32[valueBufIdx],
@@ -371,6 +446,9 @@ export default function wrapAssembly(lib: any): Yoga {
     lib._yogaMeasureFuncs.delete(ptr);
     lib._yogaDirtiedFuncs.delete(ptr);
     lib._YGNodeFinalize(ptr);
+    // Finalization callbacks run as their own task, never in the middle of a
+    // wrapped call, so swapping the wrappers here is safe.
+    updateDirtyingCallWrappers();
   });
 
   // --- Config class ---
@@ -433,18 +511,27 @@ export default function wrapAssembly(lib: any): Yoga {
 
     // --- Tree hierarchy ---
     insertChild(child: NodeImpl, index: number): void {
-      lib._YGNodeInsertChild(this._ptr, child._ptr, index);
-      this._children.splice(index, 0, child);
-      child._parent = this;
+      dirtiedErrorAfterReturn = false;
+      try {
+        lib._YGNodeInsertChild(this._ptr, child._ptr, index);
+      } catch (e) {
+        // Yoga inserted the child if the error came from a dirtied function.
+        if (dirtiedErrorAfterReturn) attachChild(this, child, index);
+        throw e;
+      }
+      attachChild(this, child, index);
     }
 
     removeChild(child: NodeImpl): void {
-      lib._YGNodeRemoveChild(this._ptr, child._ptr);
-      const idx = this._children.indexOf(child);
-      if (idx !== -1) {
-        this._children.splice(idx, 1);
+      dirtiedErrorAfterReturn = false;
+      try {
+        lib._YGNodeRemoveChild(this._ptr, child._ptr);
+      } catch (e) {
+        // Yoga removed the child if the error came from a dirtied function.
+        if (dirtiedErrorAfterReturn) detachChild(this, child);
+        throw e;
       }
-      child._parent = null;
+      detachChild(this, child);
     }
 
     getChildCount(): number {
@@ -466,6 +553,7 @@ export default function wrapAssembly(lib: any): Yoga {
       this._children = [];
       this._parent = null;
       lib._YGNodeReset(this._ptr);
+      updateDirtyingCallWrappers();
     }
 
     // --- Style setters ---
@@ -904,9 +992,25 @@ export default function wrapAssembly(lib: any): Yoga {
         const nodeWeakRef = new WeakRef(this);
         lib._yogaDirtiedFuncs.set(this._ptr, () => {
           const node = nodeWeakRef.deref();
-          if (node) dirtiedFunc(node);
+          if (!node) return;
+          try {
+            dirtiedFunc(node);
+          } catch (error) {
+            // Keep the first error, but let a trap or abort replace it: it
+            // means the module is broken, which matters more.
+            if (
+              pendingDirtiedError === null ||
+              (error instanceof WebAssembly.RuntimeError &&
+                !(
+                  pendingDirtiedError.error instanceof WebAssembly.RuntimeError
+                ))
+            ) {
+              pendingDirtiedError = {error};
+            }
+          }
         });
         lib._jswrap_YGNodeSetDirtiedFunc(this._ptr);
+        updateDirtyingCallWrappers();
       } else {
         this.unsetDirtiedFunc();
       }
@@ -915,6 +1019,7 @@ export default function wrapAssembly(lib: any): Yoga {
     unsetDirtiedFunc(): void {
       lib._yogaDirtiedFuncs.delete(this._ptr);
       lib._jswrap_YGNodeUnsetDirtiedFunc(this._ptr);
+      updateDirtyingCallWrappers();
     }
 
     // --- Dirty / Layout ---
