@@ -18,7 +18,7 @@ YGSize measureFractionalWidth(
     YGMeasureMode /*widthMode*/,
     float /*height*/,
     YGMeasureMode /*heightMode*/) {
-  const float* measuredWidth =
+  const auto* measuredWidth =
       static_cast<const float*>(YGNodeGetContext(const_cast<YGNodeRef>(node)));
   return YGSize{*measuredWidth, 20.0f};
 }
