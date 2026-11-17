@@ -2550,7 +2550,7 @@ static void calculateLayoutImpl(
                 const float childHeight = !isMainAxisRow
                     ? (child->getLayout().measuredDimension(Dimension::Height) +
                        child->style().computeMarginForAxis(
-                           crossAxis, availableInnerWidth))
+                           mainAxis, availableInnerWidth))
                     : leadPerLine + lineHeight;
 
                 if (!(yoga::inexactEquals(
