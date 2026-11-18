@@ -781,3 +781,101 @@ TEST(YogaAutoMinSize, errata_bit_round_trips) {
 
   YGConfigFree(config);
 }
+
+// Counts the regular measure function's calls at most 0 wide: the min-content
+// probe.
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+static int gAtMostZeroWidthCalls = 0;
+
+static YGSize measureWordWrappingTextCountingProbes(
+    YGNodeConstRef node,
+    float width,
+    YGMeasureMode widthMode,
+    float height,
+    YGMeasureMode heightMode) {
+  if (widthMode == YGMeasureModeAtMost && width == 0.0f) {
+    ++gAtMostZeroWidthCalls;
+  }
+  return measureWordWrappingText(node, width, widthMode, height, heightMode);
+}
+
+// By default the regular measure function answers the probe at most 0 wide,
+// and its answer is the min-content width.
+TEST(YogaAutoMinSize, measure_func_probed_at_most_zero_by_default) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/20);
+  YGNodeSetMeasureFunc(row.text, measureWordWrappingTextCountingProbes);
+  gAtMostZeroWidthCalls = 0;
+  row.layout();
+
+  EXPECT_GT(gAtMostZeroWidthCalls, 0);
+  EXPECT_FLOAT_EQ(kWordWidth, YGNodeLayoutGetWidth(row.text));
+}
+
+// A measure function that doesn't follow the measure modes isn't probed: what
+// it answers at most 0 wide says nothing about its min-content, which is 0.
+TEST(
+    YogaAutoMinSize,
+    measure_func_not_probed_when_not_following_measure_modes) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/20);
+  YGNodeSetMeasureFunc(row.text, measureWordWrappingTextCountingProbes);
+  YGNodeSetMeasureFuncFollowsMeasureModes(row.text, false);
+  gAtMostZeroWidthCalls = 0;
+  row.layout();
+
+  EXPECT_EQ(gAtMostZeroWidthCalls, 0);
+  // Floor 0: the text shrinks to 10 (container 20 - spacer 10).
+  EXPECT_FLOAT_EQ(10.0f, YGNodeLayoutGetWidth(row.text));
+}
+
+// A static min-content is still honoured when the measure function doesn't
+// follow the measure modes.
+TEST(
+    YogaAutoMinSize,
+    static_min_content_honoured_when_not_following_measure_modes) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/20);
+  YGNodeSetMeasureFunc(row.text, measureWordWrappingTextCountingProbes);
+  YGNodeSetMeasureFuncFollowsMeasureModes(row.text, false);
+  YGNodeSetMinContentWidth(row.text, 25.0f);
+  gAtMostZeroWidthCalls = 0;
+  row.layout();
+
+  EXPECT_EQ(gAtMostZeroWidthCalls, 0);
+  EXPECT_FLOAT_EQ(25.0f, YGNodeLayoutGetWidth(row.text));
+}
+
+// So is a min-content measure function.
+TEST(
+    YogaAutoMinSize,
+    min_content_measure_func_honoured_when_not_following_measure_modes) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/20);
+  YGNodeSetMeasureFunc(row.text, measureWordWrappingTextCountingProbes);
+  YGNodeSetMeasureFuncFollowsMeasureModes(row.text, false);
+  YGNodeSetMinContentMeasureFunc(row.text, measureMinContentWord);
+  gAtMostZeroWidthCalls = 0;
+  gMinContentCalls = 0;
+  row.layout();
+
+  EXPECT_EQ(gAtMostZeroWidthCalls, 0);
+  EXPECT_GT(gMinContentCalls, 0);
+  EXPECT_FLOAT_EQ(kWordWidth, YGNodeLayoutGetWidth(row.text));
+}
+
+// Its padding and border still count: only its content contributes 0.
+TEST(
+    YogaAutoMinSize,
+    padding_and_border_count_when_not_following_measure_modes) {
+  ShrinkRow row(/*useAutoMinSize=*/true, /*containerWidth=*/15);
+  YGNodeSetMeasureFunc(row.text, measureWordWrappingTextCountingProbes);
+  YGNodeSetMeasureFuncFollowsMeasureModes(row.text, false);
+  YGNodeStyleSetPadding(row.text, YGEdgeLeft, 3);
+  YGNodeStyleSetPadding(row.text, YGEdgeRight, 4);
+  YGNodeStyleSetBorder(row.text, YGEdgeLeft, 1);
+  YGNodeStyleSetBorder(row.text, YGEdgeRight, 2);
+  gAtMostZeroWidthCalls = 0;
+  row.layout();
+
+  EXPECT_EQ(gAtMostZeroWidthCalls, 0);
+  // Floor 10 (3 + 4 + 1 + 2), above the 5 left for it (container 15 - spacer
+  // 10).
+  EXPECT_FLOAT_EQ(10.0f, YGNodeLayoutGetWidth(row.text));
+}

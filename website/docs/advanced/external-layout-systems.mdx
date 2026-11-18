@@ -73,6 +73,46 @@ Each axis is passed a `MeasureMode` as a constraint:
 2. `Undefined`: The measured length in the given axis should be the maximum natural length of the content. This corresponds to [`max-content`](https://www.w3.org/TR/css-sizing-3/#max-content) sizing.
 3. `AtMost`: The measured length in the given axis should be the minimum of the available space in the axis, and the natural content size. This corresponds to [`fit-content`](https://www.w3.org/TR/css-sizing-3/#fit-content-size) sizing.
 
+## Measure functions that size themselves otherwise
+
+Yoga relies on a measure function sizing as the measure modes above describe, and infers sizes from it: it reuses a measurement under a tighter `AtMost` bound the measured size still fits within, reuses an `Undefined` measurement under an `AtMost` bound it fits within, reuses a measurement under an `Exactly` size equal to the size measured, and, for [automatic minimum sizing](https://www.w3.org/TR/css-flexbox-1/#min-size-auto), takes the size measured at `AtMost` 0 as the min-content size of the node's content. Yoga applies automatic minimum sizing only when the `MinSizeUndefinedInsteadOfAuto` errata is cleared.
+
+A measure function may size itself otherwise, for example one that fills the space it is given, or one that picks a layout by it. Tell Yoga so by setting the node's measure function not to follow the measure modes:
+
+<Tabs groupId="language">
+
+<TabItem value="cpp" label="C/C++">
+
+```cpp
+YGNodeSetMeasureFuncFollowsMeasureModes(node, false);
+```
+
+</TabItem>
+
+<TabItem value="java" label="Java">
+
+```java
+node.setMeasureFunctionFollowsMeasureModes(false);
+```
+
+</TabItem>
+
+<TabItem value="js" label="JavaScript">
+
+```ts
+node.setMeasureFuncFollowsMeasureModes(false);
+```
+
+</TabItem>
+</Tabs>
+
+Yoga then infers nothing about the node from a measurement under other constraints:
+
+- It reuses a measurement only under the same constraints.
+- For automatic minimum sizing, the measure function isn't called with `AtMost` 0. The node's min-content size is a static min-content size if one is set; otherwise its padding and border plus what its min-content measure function returns, or plus 0 without one. Static min-content sizes and min-content measure functions are available in C/C++ (`YGNodeSetMinContentWidth`, `YGNodeSetMinContentHeight` and `YGNodeSetMinContentMeasureFunc`) and Java (`setMinContentWidth`, `setMinContentHeight` and `setMinContentMeasureFunction`).
+
+The value is true by default. It has no effect on the layout of a node without a measure function, whose layout Yoga already reuses only under the same constraints. Changing it marks the node dirty.
+
 ## Invalidating measurements
 
 Yoga must be notified if the content associated with a node changes in a way which may effect measurement.

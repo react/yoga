@@ -312,6 +312,11 @@ static void serializeTreeImpl(
         "always-forms-containing-block",
         YGNodeGetAlwaysFormsContainingBlock(node),
         YGNodeGetAlwaysFormsContainingBlock(defaultNode.get()));
+    appendBoolIfNotDefault(
+        j["node"],
+        "measure-func-follows-measure-modes",
+        YGNodeGetMeasureFuncFollowsMeasureModes(node),
+        YGNodeGetMeasureFuncFollowsMeasureModes(defaultNode.get()));
     if (YGNodeHasMeasureFunc(node)) {
       auto measureFuncIt = nodesToMeasureFuncs.find(node);
       if (measureFuncIt == nodesToMeasureFuncs.end()) {

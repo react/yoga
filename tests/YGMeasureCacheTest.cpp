@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <yoga/Yoga.h>
+#include <yoga/node/Node.h>
 
 static YGSize _measureMax(
     YGNodeConstRef node,
@@ -220,4 +221,320 @@ TEST(YogaTest, remeasure_when_owner_resizes_with_percent_padding) {
   ASSERT_GT(measureCount, measuresBeforeResize);
 
   YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, measure_func_follows_measure_modes_by_default) {
+  YGNodeRef node = YGNodeNew();
+  ASSERT_TRUE(YGNodeGetMeasureFuncFollowsMeasureModes(node));
+  YGNodeFree(node);
+}
+
+TEST(
+    YogaTest,
+    remeasure_tighter_atmost_width_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  YGNodeCalculateLayout(root, 80, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(4, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, keep_tighter_atmost_width_measurement_by_default) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+  YGNodeCalculateLayout(root, 80, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(1, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(
+    YogaTest,
+    remeasure_atmost_after_max_content_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  YGNodeCalculateLayout(root, 80, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(4, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, keep_max_content_measurement_for_atmost_by_default) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  YGNodeCalculateLayout(root, 80, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(1, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(
+    YogaTest,
+    remeasure_exact_measured_width_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  // At most 100 wide it measures 10 wide. Stretched to exactly 10 wide, under
+  // the same height spec, its width is exact and equal to what it measured:
+  // only a measure function that follows the measure modes reuses its
+  // measurement there.
+  YGNodeCalculateLayout(root, 100, 100, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  YGNodeStyleSetAlignItems(root, YGAlignStretch);
+  YGNodeCalculateLayout(root, 10, 100, YGDirectionLTR);
+  ASSERT_EQ(3, measureCount);
+  ASSERT_FLOAT_EQ(10, YGNodeLayoutGetWidth(root_child0));
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, keep_measurement_for_exact_measured_width_by_default) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, 100, 100, YGDirectionLTR);
+  YGNodeStyleSetAlignItems(root, YGAlignStretch);
+  YGNodeCalculateLayout(root, 10, 100, YGDirectionLTR);
+  ASSERT_EQ(1, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, remeasure_exact_measured_size_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  // Unbounded it measures 10 x 10; then exactly 10 wide and at most 100 high:
+  // asked again.
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  YGNodeStyleSetAlignItems(root, YGAlignStretch);
+  YGNodeCalculateLayout(root, 10, 100, YGDirectionLTR);
+  ASSERT_EQ(3, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(
+    YogaTest,
+    keep_measurement_for_same_spec_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeRef root_child1 = YGNodeNew();
+  YGNodeStyleSetWidth(root_child1, 10);
+  YGNodeStyleSetHeight(root_child1, 10);
+  YGNodeInsertChild(root, root_child1, 1);
+
+  // Its sibling grows, which lays the root out again, and asks it under the
+  // same specs: its measurements are kept.
+  YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+  const int firstLayoutCount = measureCount;
+  YGNodeStyleSetHeight(root_child1, 20);
+  YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+  ASSERT_EQ(firstLayoutCount, measureCount);
+  ASSERT_FLOAT_EQ(30, YGNodeLayoutGetHeight(root));
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(
+    YogaTest,
+    remeasure_exact_width_tighter_atmost_height_when_not_following_measure_modes) {
+  YGNodeRef root = YGNodeNew();
+  YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  // As remeasure_with_computed_width_larger_than_needed_height: exactly 10
+  // wide matches the width it measured, but at most 50 high is a tighter bound
+  // than the 100 it measured under: only a measure function that follows the
+  // measure modes reuses its measurement there.
+  YGNodeCalculateLayout(root, 100, 100, YGDirectionLTR);
+  ASSERT_EQ(2, measureCount);
+  YGNodeStyleSetAlignItems(root, YGAlignStretch);
+  YGNodeCalculateLayout(root, 10, 50, YGDirectionLTR);
+  ASSERT_EQ(3, measureCount);
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(
+    YogaTest,
+    measure_again_at_exactly_its_measured_height_when_not_following_measure_modes) {
+  // In a column, its height is measured with no bound, then laid out at
+  // exactly the height it measured: measured once when its measure function
+  // follows the measure modes, and twice when it doesn't.
+  for (const bool measureFuncFollowsMeasureModes : {true, false}) {
+    YGNodeRef root = YGNodeNew();
+    YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+    YGNodeRef root_child0 = YGNodeNew();
+    int measureCount = 0;
+    YGNodeSetContext(root_child0, &measureCount);
+    YGNodeSetMeasureFunc(root_child0, _measureMin);
+    YGNodeSetMeasureFuncFollowsMeasureModes(
+        root_child0, measureFuncFollowsMeasureModes);
+    YGNodeInsertChild(root, root_child0, 0);
+
+    YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+    ASSERT_EQ(measureFuncFollowsMeasureModes ? 1 : 2, measureCount);
+
+    YGNodeFreeRecursive(root);
+  }
+}
+
+TEST(YogaTest, setting_measure_func_follows_measure_modes_dirties_on_change) {
+  YGNodeRef root = YGNodeNew();
+
+  YGNodeRef root_child0 = YGNodeNew();
+  int measureCount = 0;
+  YGNodeSetContext(root_child0, &measureCount);
+  YGNodeSetMeasureFunc(root_child0, _measureMin);
+  YGNodeInsertChild(root, root_child0, 0);
+
+  YGNodeCalculateLayout(root, 100, 100, YGDirectionLTR);
+  ASSERT_FALSE(YGNodeIsDirty(root));
+
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, true);
+  ASSERT_FALSE(YGNodeIsDirty(root_child0));
+  ASSERT_FALSE(YGNodeIsDirty(root));
+
+  YGNodeSetMeasureFuncFollowsMeasureModes(root_child0, false);
+  ASSERT_TRUE(YGNodeIsDirty(root_child0));
+  ASSERT_TRUE(YGNodeIsDirty(root));
+
+  YGNodeFreeRecursive(root);
+}
+
+TEST(YogaTest, cloned_node_keeps_measure_func_follows_measure_modes) {
+  YGNodeRef node = YGNodeNew();
+  YGNodeSetMeasureFunc(node, _measureMin);
+  YGNodeSetMeasureFuncFollowsMeasureModes(node, false);
+
+  YGNodeRef clone = YGNodeClone(node);
+  ASSERT_FALSE(YGNodeGetMeasureFuncFollowsMeasureModes(clone));
+
+  YGNodeFree(clone);
+  YGNodeFree(node);
+}
+
+TEST(YogaTest, moved_node_keeps_measure_func_follows_measure_modes) {
+  facebook::yoga::Node node;
+  node.setMeasureFuncFollowsMeasureModes(false);
+
+  facebook::yoga::Node moved{std::move(node)};
+  ASSERT_FALSE(moved.measureFuncFollowsMeasureModes());
+}
+
+TEST(YogaTest, reset_restores_measure_func_follows_measure_modes) {
+  YGNodeRef node = YGNodeNew();
+  YGNodeSetMeasureFuncFollowsMeasureModes(node, false);
+
+  YGNodeReset(node);
+  ASSERT_TRUE(YGNodeGetMeasureFuncFollowsMeasureModes(node));
+
+  YGNodeFree(node);
+}
+
+TEST(YogaTest, measure_func_follows_measure_modes_has_no_effect_on_container) {
+  // A container without a measure function reuses its layout only under the
+  // same constraints either way: its measured child is asked as often, and it
+  // is laid out the same.
+  int measureCounts[2] = {0, 0};
+  float containerWidths[2] = {0, 0};
+  for (const bool measureFuncFollowsMeasureModes : {true, false}) {
+    int& measureCount = measureCounts[measureFuncFollowsMeasureModes ? 0 : 1];
+    YGNodeRef root = YGNodeNew();
+    YGNodeStyleSetAlignItems(root, YGAlignFlexStart);
+
+    YGNodeRef container = YGNodeNew();
+    YGNodeSetMeasureFuncFollowsMeasureModes(
+        container, measureFuncFollowsMeasureModes);
+    YGNodeInsertChild(root, container, 0);
+
+    YGNodeRef leaf = YGNodeNew();
+    YGNodeSetContext(leaf, &measureCount);
+    YGNodeSetMeasureFunc(leaf, _measureMin);
+    YGNodeInsertChild(container, leaf, 0);
+
+    YGNodeCalculateLayout(root, 100, YGUndefined, YGDirectionLTR);
+    YGNodeStyleSetAlignItems(root, YGAlignStretch);
+    YGNodeCalculateLayout(root, 10, YGUndefined, YGDirectionLTR);
+    YGNodeCalculateLayout(root, 80, YGUndefined, YGDirectionLTR);
+    containerWidths[measureFuncFollowsMeasureModes ? 0 : 1] =
+        YGNodeLayoutGetWidth(container);
+
+    YGNodeFreeRecursive(root);
+  }
+  ASSERT_EQ(measureCounts[0], measureCounts[1]);
+  ASSERT_FLOAT_EQ(containerWidths[0], containerWidths[1]);
 }
