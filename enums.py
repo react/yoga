@@ -100,6 +100,11 @@ ENUMS = {
         # default on new configs to preserve the pre-fix geometry. Clear this
         # bit to opt into the spec-correct single distribution.
         ("FlexFirstPassUsesRunningTotals", 1 << 4),
+        # Use min/max-clamped flex bases when distributing positive free
+        # space, instead of the flex bases of unfrozen items. Set by default
+        # on new configs to preserve the pre-fix geometry. Clear this bit to
+        # opt into CSS Flexbox §9.7 grow free-space accounting.
+        ("FlexGrowFreeSpaceUsesClampedBasis", 1 << 5),
         # Enable all incorrect behavior (preserve compatibility)
         ("All", 0x7FFFFFFF),
         # Enable all errata except for "StretchFlexBasis" (Defaults behavior
