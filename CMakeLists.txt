@@ -10,6 +10,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/project-defaults.cmake)
 
 add_subdirectory(yoga)
+enable_testing()
 add_subdirectory(tests)
 
 option(BUILD_FUZZ_TESTS "Build fuzz tests" OFF)
