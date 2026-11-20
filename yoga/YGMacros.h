@@ -49,6 +49,9 @@
 // obj-c the header is a mismatch for the Yoga ABI.
 #define YG_ENUM_BEGIN(name) NS_ENUM(int, name)
 #define YG_ENUM_END(name)
+#elif defined(__clang__)
+#define YG_ENUM_BEGIN(name) enum name
+#define YG_ENUM_END(name) __attribute__((enum_extensibility(closed))) name
 #else
 #define YG_ENUM_BEGIN(name) enum name
 #define YG_ENUM_END(name) name
