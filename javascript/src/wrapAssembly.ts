@@ -106,6 +106,7 @@ export type Node = {
   getJustifyContent(): Justify;
   getGap(gutter: Gutter): Value;
   getMargin(edge: Edge): Value;
+  getMeasureFuncFollowsMeasureModes(): boolean;
   getMaxHeight(): Value;
   getMaxWidth(): Value;
   getMinHeight(): Value;
@@ -205,6 +206,9 @@ export type Node = {
   setMaxWidthStretch(): void;
   setDirtiedFunc(dirtiedFunc: DirtiedFunction | null): void;
   setMeasureFunc(measureFunc: MeasureFunction | null): void;
+  setMeasureFuncFollowsMeasureModes(
+    measureFuncFollowsMeasureModes: boolean,
+  ): void;
   setMinHeight(
     minHeight:
       | number
@@ -884,6 +888,10 @@ export default function wrapAssembly(lib: any): Yoga {
       return !!lib._YGNodeIsReferenceBaseline(this._ptr);
     }
 
+    getMeasureFuncFollowsMeasureModes(): boolean {
+      return !!lib._YGNodeGetMeasureFuncFollowsMeasureModes(this._ptr);
+    }
+
     // --- Measure / Dirtied ---
     setMeasureFunc(measureFunc: MeasureFunction | null): void {
       if (measureFunc) {
@@ -897,6 +905,15 @@ export default function wrapAssembly(lib: any): Yoga {
     unsetMeasureFunc(): void {
       lib._yogaMeasureFuncs.delete(this._ptr);
       lib._jswrap_YGNodeUnsetMeasureFunc(this._ptr);
+    }
+
+    setMeasureFuncFollowsMeasureModes(
+      measureFuncFollowsMeasureModes: boolean,
+    ): void {
+      lib._YGNodeSetMeasureFuncFollowsMeasureModes(
+        this._ptr,
+        measureFuncFollowsMeasureModes ? 1 : 0,
+      );
     }
 
     setDirtiedFunc(dirtiedFunc: DirtiedFunction | null): void {

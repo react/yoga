@@ -43,7 +43,8 @@ TEST_F(CacheTest, negativeCachedMeasurementDisablesCache) {
       /*lastComputedHeight=*/50.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
   EXPECT_FALSE(negativeWidth);
 
   const bool negativeHeight = canUseCachedMeasurement(
@@ -59,7 +60,8 @@ TEST_F(CacheTest, negativeCachedMeasurementDisablesCache) {
       /*lastComputedHeight=*/-0.5f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
   EXPECT_FALSE(negativeHeight);
 }
 
@@ -79,7 +81,8 @@ TEST_F(CacheTest, identicalSpecsAllowCacheReuse) {
       /*lastComputedHeight=*/45.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_TRUE(canUse);
 }
@@ -102,7 +105,8 @@ TEST_F(CacheTest, incompatibleSpecsDisableCache) {
       /*lastComputedHeight=*/95.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_FALSE(canUse);
 }
@@ -128,7 +132,8 @@ TEST_F(
       /*lastComputedHeight=*/60.0f,
       /*marginRow=*/10.0f,
       /*marginColumn=*/0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_TRUE(canUse);
 }
@@ -150,7 +155,8 @@ TEST_F(CacheTest, maxContentResultStillFitsFitContentRequest) {
       /*lastComputedHeight=*/50.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_TRUE(canUse);
 }
@@ -172,7 +178,8 @@ TEST_F(CacheTest, tighterFitContentReusesCacheWhenPreviousResultStillFits) {
       /*lastComputedHeight=*/50.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_TRUE(canUse);
 }
@@ -196,7 +203,8 @@ TEST_F(
       /*lastComputedHeight=*/50.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_FALSE(canUse);
 }
@@ -221,9 +229,113 @@ TEST_F(CacheTest, pixelGridRoundingMakesSubPixelSpecsEquivalent) {
       /*lastComputedHeight=*/20.0f,
       0.0f,
       0.0f,
-      config_);
+      config_,
+      /*measureFuncFollowsMeasureModes=*/true);
 
   EXPECT_TRUE(canUse);
+}
+
+TEST_F(CacheTest, notFollowingMeasureModesKeepsIdenticalSpecs) {
+  // The same spec still reuses its measurement.
+  EXPECT_TRUE(canUseCachedMeasurement(
+      SizingMode::StretchFit,
+      100.0f,
+      SizingMode::FitContent,
+      50.0f,
+      SizingMode::StretchFit,
+      100.0f,
+      SizingMode::FitContent,
+      50.0f,
+      /*lastComputedWidth=*/95.0f,
+      /*lastComputedHeight=*/45.0f,
+      0.0f,
+      0.0f,
+      config_,
+      /*measureFuncFollowsMeasureModes=*/false));
+}
+
+TEST_F(CacheTest, notFollowingMeasureModesDropsResultForExactSizeEqualToIt) {
+  // Exactly the size it measured (here after the margin), where only a measure
+  // function that follows the measure modes reuses its measurement.
+  const auto exactAtMeasuredWidth =
+      [this](bool measureFuncFollowsMeasureModes) {
+        return canUseCachedMeasurement(
+            SizingMode::StretchFit,
+            /*availableWidth=*/100.0f,
+            SizingMode::StretchFit,
+            /*availableHeight=*/60.0f,
+            SizingMode::FitContent,
+            /*lastAvailableWidth=*/90.0f,
+            SizingMode::StretchFit,
+            /*lastAvailableHeight=*/60.0f,
+            /*lastComputedWidth=*/90.0f,
+            /*lastComputedHeight=*/60.0f,
+            /*marginRow=*/10.0f,
+            /*marginColumn=*/0.0f,
+            config_,
+            measureFuncFollowsMeasureModes);
+      };
+  EXPECT_TRUE(exactAtMeasuredWidth(/*measureFuncFollowsMeasureModes=*/true));
+  EXPECT_FALSE(exactAtMeasuredWidth(/*measureFuncFollowsMeasureModes=*/false));
+}
+
+TEST_F(CacheTest, notFollowingMeasureModesDropsZeroResultForExactZero) {
+  // Unbounded it measured 0; exactly 0 is asked again.
+  EXPECT_FALSE(canUseCachedMeasurement(
+      SizingMode::StretchFit,
+      /*availableWidth=*/0.0f,
+      SizingMode::MaxContent,
+      /*availableHeight=*/YGUndefined,
+      SizingMode::MaxContent,
+      /*lastAvailableWidth=*/YGUndefined,
+      SizingMode::MaxContent,
+      /*lastAvailableHeight=*/YGUndefined,
+      /*lastComputedWidth=*/0.0f,
+      /*lastComputedHeight=*/0.0f,
+      0.0f,
+      0.0f,
+      config_,
+      /*measureFuncFollowsMeasureModes=*/false));
+}
+
+TEST_F(
+    CacheTest,
+    notFollowingMeasureModesDropsMaxContentResultForFitContentRequest) {
+  // Same inputs as maxContentResultStillFitsFitContentRequest.
+  EXPECT_FALSE(canUseCachedMeasurement(
+      SizingMode::FitContent,
+      /*availableWidth=*/120.0f,
+      SizingMode::StretchFit,
+      /*availableHeight=*/50.0f,
+      SizingMode::MaxContent,
+      /*lastAvailableWidth=*/YGUndefined,
+      SizingMode::StretchFit,
+      /*lastAvailableHeight=*/50.0f,
+      /*lastComputedWidth=*/80.0f,
+      /*lastComputedHeight=*/50.0f,
+      0.0f,
+      0.0f,
+      config_,
+      /*measureFuncFollowsMeasureModes=*/false));
+}
+
+TEST_F(CacheTest, notFollowingMeasureModesDropsResultForTighterFitContent) {
+  // Same inputs as tighterFitContentReusesCacheWhenPreviousResultStillFits.
+  EXPECT_FALSE(canUseCachedMeasurement(
+      SizingMode::FitContent,
+      /*availableWidth=*/100.0f,
+      SizingMode::StretchFit,
+      /*availableHeight=*/50.0f,
+      SizingMode::FitContent,
+      /*lastAvailableWidth=*/150.0f,
+      SizingMode::StretchFit,
+      /*lastAvailableHeight=*/50.0f,
+      /*lastComputedWidth=*/80.0f,
+      /*lastComputedHeight=*/50.0f,
+      0.0f,
+      0.0f,
+      config_,
+      /*measureFuncFollowsMeasureModes=*/false));
 }
 
 } // namespace facebook::yoga
