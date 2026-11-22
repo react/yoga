@@ -341,6 +341,199 @@ class YogaNodeTest {
     )
   }
 
+  @Test
+  fun testMeasureFunctionFollowsMeasureModesByDefault() {
+    assertTrue(createNode().measureFunctionFollowsMeasureModes)
+  }
+
+  @Test
+  fun testClonesKeepMeasureFunctionFollowsMeasureModes() {
+    val node = createNode()
+    node.setMeasureFunctionFollowsMeasureModes(false)
+    assertFalse(node.measureFunctionFollowsMeasureModes)
+    assertFalse(node.cloneWithoutChildren().measureFunctionFollowsMeasureModes)
+    assertFalse(node.cloneWithChildren().measureFunctionFollowsMeasureModes)
+  }
+
+  @Test
+  fun testResetRestoresMeasureFunctionFollowsMeasureModes() {
+    val node = createNode()
+    node.setMeasureFunctionFollowsMeasureModes(false)
+    node.reset()
+    assertTrue(node.measureFunctionFollowsMeasureModes)
+  }
+
+  @Test
+  fun testSettingMeasureFunctionFollowsMeasureModesDirtiesOnChange() {
+    val root = createNode()
+    val child = createNode()
+    child.setMeasureFunction(
+        YogaMeasureFunction { _, _, _, _, _ -> YogaMeasureOutput.make(10f, 10f) },
+    )
+    root.addChildAt(child, 0)
+    root.calculateLayout(100f, 100f)
+    assertFalse(root.isDirty())
+
+    child.setMeasureFunctionFollowsMeasureModes(true)
+    assertFalse(child.isDirty())
+    assertFalse(root.isDirty())
+
+    child.setMeasureFunctionFollowsMeasureModes(false)
+    assertTrue(child.isDirty())
+    assertTrue(root.isDirty())
+  }
+
+  @Test
+  fun testMeasureFunctionIsNotAskedAgainUnderTighterBoundItFitsByDefault() {
+    assertEquals(0, measuresAt80WideAfterAtMost100(followsMeasureModes = true))
+  }
+
+  @Test
+  fun testMeasureFunctionIsAskedAgainUnderTighterBoundWhenNotFollowingMeasureModes() {
+    assertEquals(2, measuresAt80WideAfterAtMost100(followsMeasureModes = false))
+  }
+
+  @Test
+  fun testMeasureFunctionIsNotAskedAgainAtExactlyItsMeasuredWidthByDefault() {
+    assertEquals(0, measuresStretchedTo10AfterAtMost100(followsMeasureModes = true))
+  }
+
+  @Test
+  fun testMeasureFunctionIsAskedAgainAtExactlyItsMeasuredWidthWhenNotFollowingMeasureModes() {
+    assertEquals(1, measuresStretchedTo10AfterAtMost100(followsMeasureModes = false))
+  }
+
+  @Test
+  fun testMeasurementsAreKeptUnderTheSameSpecsWhenNotFollowingMeasureModes() {
+    var measureCount = 0
+    val root = createNode()
+    root.alignItems = YogaAlign.FLEX_START
+    val child = createNode()
+    child.setMeasureFunction(
+        YogaMeasureFunction { _, _, _, _, _ ->
+          measureCount++
+          YogaMeasureOutput.make(10f, 10f)
+        },
+    )
+    child.setMeasureFunctionFollowsMeasureModes(false)
+    root.addChildAt(child, 0)
+    val sibling = createNode()
+    sibling.setWidth(10f)
+    sibling.setHeight(10f)
+    root.addChildAt(sibling, 1)
+    root.calculateLayout(100f, YogaConstants.UNDEFINED)
+    val firstLayoutCount = measureCount
+
+    sibling.setHeight(20f)
+    root.calculateLayout(100f, YogaConstants.UNDEFINED)
+
+    assertEquals(firstLayoutCount, measureCount)
+    assertEquals(30f, root.layoutHeight, 0f)
+  }
+
+  @Test
+  fun testMinContentProbeAsksMeasureFunctionAtMostZeroByDefault() {
+    val (probeCount, textWidth) = probesAtMostZeroWhenShrunk(followsMeasureModes = true)
+    assertTrue(probeCount > 0)
+    assertEquals(30f, textWidth, 0f)
+  }
+
+  @Test
+  fun testMinContentProbeSkipsMeasureFunctionWhenNotFollowingMeasureModes() {
+    val (probeCount, textWidth) = probesAtMostZeroWhenShrunk(followsMeasureModes = false)
+    assertEquals(0, probeCount)
+    assertEquals(10f, textWidth, 0f)
+  }
+
+  /**
+   * How many times a node is measured stretched to exactly 10 wide, after it measured 10 wide at
+   * most 100 wide, under the same height.
+   */
+  private fun measuresStretchedTo10AfterAtMost100(followsMeasureModes: Boolean): Int {
+    var measureCount = 0
+    val root = createNode()
+    root.alignItems = YogaAlign.FLEX_START
+    val child = createNode()
+    child.setMeasureFunction(
+        YogaMeasureFunction { _, width, widthMode, _, _ ->
+          measureCount++
+          val measuredWidth = if (widthMode == YogaMeasureMode.EXACTLY) width else 10f
+          YogaMeasureOutput.make(measuredWidth, 10f)
+        },
+    )
+    child.setMeasureFunctionFollowsMeasureModes(followsMeasureModes)
+    root.addChildAt(child, 0)
+    root.calculateLayout(100f, 100f)
+    val firstLayoutCount = measureCount
+    root.alignItems = YogaAlign.STRETCH
+    root.calculateLayout(10f, 100f)
+    return measureCount - firstLayoutCount
+  }
+
+  /**
+   * How many times a node 10 wide is measured laid out at most 80 wide, after it was laid out at
+   * most 100 wide.
+   */
+  private fun measuresAt80WideAfterAtMost100(followsMeasureModes: Boolean): Int {
+    var measureCount = 0
+    val root = createNode()
+    root.alignItems = YogaAlign.FLEX_START
+    val child = createNode()
+    child.setMeasureFunction(
+        YogaMeasureFunction { _, width, widthMode, _, _ ->
+          measureCount++
+          val measuredWidth = if (widthMode == YogaMeasureMode.UNDEFINED) 10f else minOf(10f, width)
+          YogaMeasureOutput.make(measuredWidth, 10f)
+        },
+    )
+    child.setMeasureFunctionFollowsMeasureModes(followsMeasureModes)
+    root.addChildAt(child, 0)
+    root.calculateLayout(100f, YogaConstants.UNDEFINED)
+    val firstLayoutCount = measureCount
+    root.calculateLayout(80f, YogaConstants.UNDEFINED)
+    return measureCount - firstLayoutCount
+  }
+
+  /**
+   * Shrinks a text 90 wide whose longest word is 30 wide into 10, beside a spacer 10 wide, with
+   * automatic minimum sizing on. Returns how many times its measure function is asked at most 0
+   * wide, and the width it's laid out at.
+   */
+  private fun probesAtMostZeroWhenShrunk(followsMeasureModes: Boolean): Pair<Int, Float> {
+    var probeCount = 0
+    val config = YogaConfigFactory.create()
+    config.setErrata(YogaErrata.NONE)
+    val root = createNode(config)
+    root.flexDirection = YogaFlexDirection.ROW
+    root.setWidth(20f)
+    root.setHeight(50f)
+    val text = createNode(config)
+    text.setMeasureFunction(
+        YogaMeasureFunction { _, width, widthMode, _, _ ->
+          if (widthMode == YogaMeasureMode.AT_MOST && width == 0f) {
+            probeCount++
+          }
+          val measuredWidth =
+              when (widthMode) {
+                YogaMeasureMode.EXACTLY -> width
+                YogaMeasureMode.AT_MOST -> minOf(90f, maxOf(30f, width))
+                else -> 90f
+              }
+          YogaMeasureOutput.make(measuredWidth, 16f)
+        },
+    )
+    text.setMeasureFunctionFollowsMeasureModes(followsMeasureModes)
+    text.setFlexBasis(90f)
+    text.flexShrink = 1f
+    root.addChildAt(text, 0)
+    val spacer = createNode(config)
+    spacer.setWidth(10f)
+    spacer.flexShrink = 0f
+    root.addChildAt(spacer, 1)
+    root.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
+    return Pair(probeCount, text.layoutWidth)
+  }
+
   /** No width of its own, so flexing gives it its third. */
   private val fillsWidth = YogaMeasureFunction { _, _, _, _, _ -> YogaMeasureOutput.make(0f, 10f) }
 

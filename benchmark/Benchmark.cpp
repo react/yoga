@@ -265,6 +265,8 @@ std::shared_ptr<YGNode> buildNodeFromJson(
   for (json::iterator it = nodeState.begin(); it != nodeState.end(); it++) {
     if (it.key() == "always-forms-containing-block") {
       YGNodeSetAlwaysFormsContainingBlock(node.get(), it.value());
+    } else if (it.key() == "measure-func-follows-measure-modes") {
+      YGNodeSetMeasureFuncFollowsMeasureModes(node.get(), it.value());
     } else if (it.key() == "measure-funcs") {
       std::vector<SerializedMeasureFunc> vec{};
       for (auto measureFuncJson : it.value()) {
