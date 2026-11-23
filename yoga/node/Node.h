@@ -306,7 +306,7 @@ class YG_EXPORT Node : public ::YGNode {
       float referenceLength,
       float ownerWidth) const;
   void processDimensions();
-  Direction resolveDirection(Direction ownerDirection);
+  Direction resolveDirection(Direction ownerDirection) const;
   void clearChildren();
   /// Replaces the occurrences of oldChild with newChild
   void replaceChild(Node* oldChild, Node* newChild);

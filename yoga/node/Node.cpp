@@ -401,7 +401,7 @@ void Node::processDimensions() {
   }
 }
 
-Direction Node::resolveDirection(const Direction ownerDirection) {
+Direction Node::resolveDirection(const Direction ownerDirection) const {
   if (style_.direction() == Direction::Inherit) {
     return ownerDirection != Direction::Inherit ? ownerDirection
                                                 : Direction::LTR;
