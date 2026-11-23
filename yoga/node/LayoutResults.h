@@ -42,11 +42,11 @@ struct LayoutResults {
   // they hold until the node, its config or its direction changes. A leaf
   // stores its measured min-content without padding and border, which doesn't
   // depend on the owner. A container stores its full min-content, which
-  // depends on `minContentOwnerWidth` when a percentage padding or margin in
-  // the subtree it walked resolves against it.
+  // depends on `minContentOwnerWidth` when its own percentage padding, or a
+  // percentage padding or margin below it, resolves against it
+  // (`minContentResolvesAgainstOwnerWidth`).
   std::array<uint32_t, 2> minContentGeneration = {};
   std::array<float, 2> minContentOwnerWidth = {{YGUndefined, YGUndefined}};
-  std::array<bool, 2> minContentResolvesAgainstOwnerWidth = {};
   std::array<float, 2> minContent = {{YGUndefined, YGUndefined}};
 
   // Instead of recomputing the entire layout every single time, we cache some
@@ -82,6 +82,20 @@ struct LayoutResults {
 
   void setComputedAutoMinMainSizeResolved(bool resolved) {
     computedAutoMinMainSizeResolved_ = resolved;
+  }
+
+  bool minContentResolvesAgainstOwnerWidth(Dimension axis) const {
+    return axis == Dimension::Width
+        ? minContentWidthResolvesAgainstOwnerWidth_
+        : minContentHeightResolvesAgainstOwnerWidth_;
+  }
+
+  void setMinContentResolvesAgainstOwnerWidth(Dimension axis, bool resolves) {
+    if (axis == Dimension::Width) {
+      minContentWidthResolvesAgainstOwnerWidth_ = resolves;
+    } else {
+      minContentHeightResolvesAgainstOwnerWidth_ = resolves;
+    }
   }
 
   float dimension(Dimension axis) const {
@@ -146,6 +160,8 @@ struct LayoutResults {
   Direction direction_ : bitCount<Direction>() = Direction::Inherit;
   bool hadOverflow_ : 1 = false;
   bool computedAutoMinMainSizeResolved_ : 1 = false;
+  bool minContentWidthResolvesAgainstOwnerWidth_ : 1 = false;
+  bool minContentHeightResolvesAgainstOwnerWidth_ : 1 = false;
 
   std::array<float, 2> dimensions_ = {{YGUndefined, YGUndefined}};
   std::array<float, 2> measuredDimensions_ = {{YGUndefined, YGUndefined}};
