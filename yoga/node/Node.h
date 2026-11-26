@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstdio>
 #include <vector>
@@ -29,6 +30,35 @@
 struct YGNode {};
 
 namespace facebook::yoga {
+
+/**
+ * A pointer with relaxed atomic loads and stores. A node shared between trees
+ * can have its owner read by a layout pass on one thread while a clone of its
+ * previous owner, on another thread, writes it. Copies read the pointer once,
+ * so Node keeps its defaulted copy operations.
+ */
+template <typename T>
+class RelaxedAtomicPointer {
+ public:
+  RelaxedAtomicPointer() = default;
+  RelaxedAtomicPointer(const RelaxedAtomicPointer& other) noexcept
+      : value_(other.load()) {}
+  RelaxedAtomicPointer& operator=(const RelaxedAtomicPointer& other) noexcept {
+    store(other.load());
+    return *this;
+  }
+
+  T* load() const noexcept {
+    return value_.load(std::memory_order_relaxed);
+  }
+
+  void store(T* value) noexcept {
+    value_.store(value, std::memory_order_relaxed);
+  }
+
+ private:
+  std::atomic<T*> value_{nullptr};
+};
 
 class YG_EXPORT Node : public ::YGNode {
  public:
@@ -153,7 +183,7 @@ class YG_EXPORT Node : public ::YGNode {
   // of the Node when a Node only belongs to one YogaTree or nullptr when
   // the Node is shared between two or more YogaTrees.
   Node* getOwner() const {
-    return owner_;
+    return owner_.load();
   }
 
   const std::vector<Node*>& getChildren() const {
@@ -275,7 +305,7 @@ class YG_EXPORT Node : public ::YGNode {
   }
 
   void setOwner(Node* owner) {
-    owner_ = owner;
+    owner_.store(owner);
   }
 
   // TODO: rvalue override for setChildren
@@ -355,7 +385,7 @@ class YG_EXPORT Node : public ::YGNode {
   LayoutResults layout_;
   size_t lineIndex_ = 0;
   size_t contentsChildrenCount_ = 0;
-  Node* owner_ = nullptr;
+  RelaxedAtomicPointer<Node> owner_;
   std::vector<Node*> children_;
   const Config* config_;
   std::array<Style::SizeLength, 2> processedDimensions_{

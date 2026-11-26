@@ -318,7 +318,7 @@ void Node::setPosition(
   /* Root nodes should always be laid out as LTR, so we don't return negative
    * values. */
   const Direction directionRespectingRoot =
-      owner_ != nullptr ? direction : Direction::LTR;
+      getOwner() != nullptr ? direction : Direction::LTR;
   const FlexDirection mainAxis =
       yoga::resolveDirection(style_.flexDirection(), directionRespectingRoot);
   const FlexDirection crossAxis =
@@ -458,15 +458,15 @@ void Node::markDirtyAndPropagate() {
   if (!isDirty_) {
     setDirty(true);
     setLayoutComputedFlexBasis(FloatOptional());
-    if (owner_ != nullptr) {
-      owner_->markDirtyAndPropagate();
+    if (Node* owner = getOwner()) {
+      owner->markDirtyAndPropagate();
     }
   }
 }
 
 float Node::resolveFlexGrow() const {
   // Root nodes flexGrow should always be 0
-  if (owner_ == nullptr) {
+  if (getOwner() == nullptr) {
     return 0.0;
   }
   if (style_.flexGrow().isDefined()) {
@@ -479,7 +479,7 @@ float Node::resolveFlexGrow() const {
 }
 
 float Node::resolveFlexShrink() const {
-  if (owner_ == nullptr) {
+  if (getOwner() == nullptr) {
     return 0.0;
   }
   if (style_.flexShrink().isDefined()) {
@@ -505,7 +505,9 @@ void Node::reset() {
       children_.empty(),
       "Cannot reset a node which still has children attached");
   yoga::assertFatalWithNode(
-      this, owner_ == nullptr, "Cannot reset a node still attached to a owner");
+      this,
+      getOwner() == nullptr,
+      "Cannot reset a node still attached to a owner");
 
   *this = Node{getConfig()};
 }
