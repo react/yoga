@@ -27,8 +27,6 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/**/*.cpp)
 
-enable_testing()
-
 add_executable(yogatests ${SOURCES})
 target_link_libraries(yogatests yogacore GTest::gtest_main)
 
