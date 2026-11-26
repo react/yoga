@@ -108,12 +108,31 @@ void roundLayoutResultsToPixelGrid(
     // size as this could lead to unwanted text truncation.
     const bool textRounding = node->getNodeType() == NodeType::Text;
 
+    // A node's size runs from its rounded absolute leading edge. A non-text
+    // node takes its position from the same edge, so a child that shares an
+    // edge with its parent keeps sharing it once rounded. A text node keeps
+    // its floored relative position, which stays put across relayouts.
+    const double roundedNodeLeft = roundValueToPixelGridDouble(
+        absoluteNodeLeft, pointScaleFactor, false, textRounding);
+    const double roundedNodeTop = roundValueToPixelGridDouble(
+        absoluteNodeTop, pointScaleFactor, false, textRounding);
+
     node->setLayoutPosition(
-        roundValueToPixelGrid(nodeLeft, pointScaleFactor, false, textRounding),
+        textRounding
+            ? roundValueToPixelGrid(nodeLeft, pointScaleFactor, false, true)
+            : static_cast<float>(
+                  roundedNodeLeft -
+                  roundValueToPixelGridDouble(
+                      absoluteLeft, pointScaleFactor, false, false)),
         PhysicalEdge::Left);
 
     node->setLayoutPosition(
-        roundValueToPixelGrid(nodeTop, pointScaleFactor, false, textRounding),
+        textRounding
+            ? roundValueToPixelGrid(nodeTop, pointScaleFactor, false, true)
+            : static_cast<float>(
+                  roundedNodeTop -
+                  roundValueToPixelGridDouble(
+                      absoluteTop, pointScaleFactor, false, false)),
         PhysicalEdge::Top);
 
     // We multiply dimension by scale factor and if the result is close to the
@@ -138,11 +157,7 @@ void roundLayoutResultsToPixelGrid(
                       pointScaleFactor,
                       textRounding,
                       false) -
-                  roundValueToPixelGridDouble(
-                      absoluteNodeLeft,
-                      pointScaleFactor,
-                      false,
-                      textRounding)));
+                  roundedNodeLeft));
 
     node->getLayout().setDimension(
         Dimension::Height,
@@ -154,8 +169,7 @@ void roundLayoutResultsToPixelGrid(
                       pointScaleFactor,
                       textRounding,
                       false) -
-                  roundValueToPixelGridDouble(
-                      absoluteNodeTop, pointScaleFactor, false, textRounding)));
+                  roundedNodeTop));
   }
 
   for (yoga::Node* child : node->getChildren()) {
