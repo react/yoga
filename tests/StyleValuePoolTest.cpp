@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <yoga/style/StyleValuePool.h>
 #include <array>
+#include <limits>
 
 namespace facebook::yoga {
 
@@ -176,6 +177,36 @@ TEST(StyleValuePool, store_large_int_and_keyword_repeatedly) {
   pool.store(handle, StyleSizeLength::points(262144));
 
   EXPECT_EQ(pool.getSize(handle), StyleSizeLength::points(262144));
+}
+
+TEST(StyleValuePool, store_values_outside_int32_range) {
+  const auto max = std::numeric_limits<float>::max();
+  for (const float value : {2147483648.0f, -4294967296.0f, max, -max}) {
+    StyleValuePool pool;
+    StyleValueHandle lengthHandle;
+    StyleValueHandle sizeHandle;
+    StyleValueHandle numberHandle;
+
+    pool.store(lengthHandle, StyleLength::points(value));
+    pool.store(sizeHandle, StyleSizeLength::percent(value));
+    pool.store(numberHandle, FloatOptional{value});
+
+    EXPECT_EQ(pool.getLength(lengthHandle), StyleLength::points(value));
+    EXPECT_EQ(pool.getSize(sizeHandle), StyleSizeLength::percent(value));
+    EXPECT_EQ(pool.getNumber(numberHandle), FloatOptional{value});
+  }
+}
+
+TEST(StyleValuePool, store_infinite_numbers) {
+  const auto infinity = std::numeric_limits<float>::infinity();
+  for (const float value : {infinity, -infinity}) {
+    StyleValuePool pool;
+    StyleValueHandle handle;
+
+    pool.store(handle, FloatOptional{value});
+
+    EXPECT_EQ(pool.getNumber(handle), FloatOptional{value});
+  }
 }
 
 } // namespace facebook::yoga
