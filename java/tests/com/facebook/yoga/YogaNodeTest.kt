@@ -365,6 +365,77 @@ class YogaNodeTest {
     return root.getChildAt(0).layoutWidth.toInt()
   }
 
+  @Test
+  fun testGapPointsThroughYogaProps() {
+    for (gutter in YogaGutter.values()) {
+      val props: YogaProps = createNode()
+      props.setGap(gutter, 12.5f)
+      assertEquals(YogaValue(12.5f, YogaUnit.POINT), props.getGap(gutter))
+    }
+  }
+
+  @Test
+  fun testGapPercentThroughYogaProps() {
+    for (gutter in YogaGutter.values()) {
+      val props: YogaProps = createNode()
+      props.setGapPercent(gutter, 25f)
+      assertEquals(YogaValue(25f, YogaUnit.PERCENT), props.getGap(gutter))
+    }
+  }
+
+  @Test
+  fun testGapUndefinedThroughYogaProps() {
+    for (gutter in YogaGutter.values()) {
+      val props: YogaProps = createNode()
+      assertEquals(YogaValue.UNDEFINED, props.getGap(gutter))
+      props.setGap(gutter, 12.5f)
+      props.setGap(gutter, YogaConstants.UNDEFINED)
+      assertEquals(YogaValue.UNDEFINED, props.getGap(gutter))
+      props.setGapPercent(gutter, 25f)
+      props.setGapPercent(gutter, YogaConstants.UNDEFINED)
+      assertEquals(YogaValue.UNDEFINED, props.getGap(gutter))
+    }
+  }
+
+  @Test
+  fun testGapLayoutThroughYogaProps() {
+    val root = createNode()
+    root.flexDirection = YogaFlexDirection.ROW
+    root.setWidth(200f)
+    val props: YogaProps = root
+    repeat(2) {
+      val child = createNode()
+      child.setWidth(20f)
+      child.setHeight(10f)
+      root.addChildAt(child, it)
+    }
+
+    props.setGap(YogaGutter.COLUMN, 10f)
+    root.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
+    assertEquals(30f, root.getChildAt(1).layoutX, 0f)
+
+    props.setGapPercent(YogaGutter.COLUMN, 10f)
+    root.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
+    assertEquals(40f, root.getChildAt(1).layoutX, 0f)
+
+    props.setGap(YogaGutter.COLUMN, YogaConstants.UNDEFINED)
+    root.calculateLayout(YogaConstants.UNDEFINED, YogaConstants.UNDEFINED)
+    assertEquals(20f, root.getChildAt(1).layoutX, 0f)
+  }
+
+  @Test
+  fun testGapMethodsHaveJvmDefaults() {
+    assertTrue(YogaProps::class.java.getMethod("getGap", YogaGutter::class.java).isDefault)
+    for (name in listOf("setGap", "setGapPercent")) {
+      assertTrue(
+          YogaProps::class
+              .java
+              .getMethod(name, YogaGutter::class.java, java.lang.Float.TYPE)
+              .isDefault
+      )
+    }
+  }
+
   private fun createNode(): YogaNode = mNodeFactory.create()
 
   private fun createNode(config: YogaConfig): YogaNode = mNodeFactory.create(config)

@@ -43,7 +43,11 @@ android {
     }
   }
 
-  kotlinOptions { jvmTarget = "17" }
+  kotlinOptions {
+    jvmTarget = "17"
+    // Emit JVM defaults while retaining DefaultImpls bridges for existing Kotlin consumers.
+    freeCompilerArgs += "-Xjvm-default=all-compatibility"
+  }
 
   publishing {
     multipleVariants {

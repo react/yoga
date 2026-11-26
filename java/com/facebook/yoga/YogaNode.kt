@@ -204,11 +204,11 @@ public abstract class YogaNode : YogaProps {
 
   abstract override var aspectRatio: Float
 
-  public abstract fun getGap(gutter: YogaGutter): YogaValue
+  abstract override fun getGap(gutter: YogaGutter): YogaValue
 
-  public abstract fun setGap(gutter: YogaGutter, gapLength: Float)
+  abstract override fun setGap(gutter: YogaGutter, gapLength: Float)
 
-  public abstract fun setGapPercent(gutter: YogaGutter, gapLength: Float)
+  abstract override fun setGapPercent(gutter: YogaGutter, gapLength: Float)
 
   public abstract val layoutX: Float
 
