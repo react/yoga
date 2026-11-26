@@ -27,7 +27,7 @@ enum class SizingMode {
   StretchFit,
 
   /**
-   * A box’s “ideal” size in a given axis when given infinite available space.
+   * A box's "ideal" size in a given axis when given infinite available space.
    * Usually this is the smallest size the box could take in that axis while
    * still fitting around its contents, i.e. minimizing unfilled space while
    * avoiding overflow.
