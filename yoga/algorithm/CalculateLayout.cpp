@@ -395,7 +395,7 @@ static void computeFlexBasisForChild(
       childWidth = width;
       childWidthSizingMode = SizingMode::StretchFit;
       if (childStyle.aspectRatio().isDefined()) {
-        childHeight =
+        childHeight = marginColumn +
             (childWidth - marginRow) / childStyle.aspectRatio().unwrap();
         childHeightSizingMode = SizingMode::StretchFit;
       }
@@ -412,7 +412,7 @@ static void computeFlexBasisForChild(
       childHeightSizingMode = SizingMode::StretchFit;
 
       if (childStyle.aspectRatio().isDefined()) {
-        childWidth =
+        childWidth = marginRow +
             (childHeight - marginColumn) * childStyle.aspectRatio().unwrap();
         childWidthSizingMode = SizingMode::StretchFit;
       }
