@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+// @dep=fbsource//xplat/yoga:yoga-for-debug
 #include <stdexcept>
 
 #include <gtest/gtest.h>
