@@ -24,7 +24,7 @@ jobs:
         run: yarn gentest-validate
 
       - name: yarn gentest
-        run: yarn gentest -h
+        run: yarn gentest
 
       - name: Check for modified tests
         run: |
