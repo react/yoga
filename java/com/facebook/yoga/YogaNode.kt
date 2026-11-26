@@ -251,6 +251,20 @@ public abstract class YogaNode : YogaProps {
 
   abstract override fun setBaselineFunction(yogaBaselineFunction: YogaBaselineFunction?)
 
+  /**
+   * Sets a callback invoked synchronously when a clean node becomes dirty. Pass null to unregister.
+   * The callback receives the node that became dirty, including when dirtying propagates to an
+   * ancestor. It runs on the thread that changed the node. If it throws, the exception reaches the
+   * caller after native dirty propagation completes; remaining callbacks for that change are
+   * skipped.
+   *
+   * Clones inherit the callback; reset removes it. Callbacks may replace or unregister themselves,
+   * but must not free nodes or modify the tree currently being dirtied.
+   *
+   * Does nothing by default for custom subclasses that do not support dirtied callbacks.
+   */
+  public open fun setDirtiedFunction(dirtiedFunction: YogaDirtiedFunction?) {}
+
   public abstract val isMeasureDefined: Boolean
 
   public abstract val isBaselineDefined: Boolean

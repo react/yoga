@@ -51,6 +51,9 @@ public object YogaNative {
   @JvmStatic public external fun jni_YGNodeResetJNI(nativePointer: Long)
 
   @JvmStatic
+  public external fun jni_YGNodeSetDirtiedFuncJNI(nativePointer: Long, node: YogaNodeJNIBase?)
+
+  @JvmStatic
   public external fun jni_YGNodeInsertChildJNI(nativePointer: Long, childPointer: Long, index: Int)
 
   @JvmStatic

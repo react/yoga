@@ -11,6 +11,8 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <unordered_map>
 #include "LayoutContext.h"
 #include "YGJNI.h"
 #include "YGJTypesVanilla.h"
@@ -22,12 +24,90 @@ using namespace facebook;
 using namespace facebook::yoga;
 using namespace facebook::yoga::vanillajni;
 
+// Dirtied callbacks also run outside layout, where LayoutContext has no node
+// map. Weak references allow Java's finalizer to reclaim nodes with callbacks.
+struct DirtiedNodes {
+  std::mutex mutex;
+  std::unordered_map<YGNodeConstRef, jweak> nodes;
+};
+
+static DirtiedNodes& getDirtiedNodes() {
+  static DirtiedNodes registry;
+  return registry;
+}
+
+static void clearDirtiedNode(JNIEnv* env, YGNodeConstRef node) {
+  auto& registry = getDirtiedNodes();
+  std::lock_guard<std::mutex> lock(registry.mutex);
+  auto it = registry.nodes.find(node);
+  if (it != registry.nodes.end()) {
+    env->DeleteWeakGlobalRef(it->second);
+    registry.nodes.erase(it);
+  }
+}
+
+static void YGJNIDirtiedFunc(YGNodeConstRef node) {
+  JNIEnv* env = getCurrentEnv();
+  // Let Yoga finish dirty propagation, then let JNI rethrow the first error.
+  // No further Java callbacks may run while an exception is pending.
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    return;
+  }
+
+  ScopedLocalRef<jobject> javaNode(env);
+  {
+    auto& registry = getDirtiedNodes();
+    std::lock_guard<std::mutex> lock(registry.mutex);
+    auto it = registry.nodes.find(node);
+    if (it != registry.nodes.end()) {
+      javaNode.reset(env->NewLocalRef(it->second));
+    }
+  }
+
+  if (javaNode) {
+    auto objectClass = make_local_ref(env, env->GetObjectClass(javaNode.get()));
+    // NOLINTNEXTLINE(misc-misplaced-const)
+    static const jmethodID methodId =
+        getMethodId(env, objectClass.get(), "dirtied", "()V");
+    // Deliberately leave a callback exception pending instead of throwing C++
+    // through the setter, so native dirty propagation and tree updates finish.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+    env->CallVoidMethod(javaNode.get(), methodId);
+  }
+}
+
 static inline ScopedLocalRef<jobject> YGNodeJobject(YGNodeConstRef node) {
   return LayoutContext::getNodeMap()->ref(node);
 }
 
 static inline YGNodeRef _jlong2YGNodeRef(jlong addr) {
   return reinterpret_cast<YGNodeRef>(static_cast<intptr_t>(addr));
+}
+
+static void jni_YGNodeSetDirtiedFuncJNI(
+    JNIEnv* env,
+    jobject /*obj*/,
+    jlong nativePointer,
+    jobject javaNode) {
+  auto node = _jlong2YGNodeRef(nativePointer);
+  jweak reference =
+      javaNode != nullptr ? env->NewWeakGlobalRef(javaNode) : nullptr;
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    return;
+  }
+  {
+    auto& registry = getDirtiedNodes();
+    std::lock_guard<std::mutex> lock(registry.mutex);
+    auto it = registry.nodes.find(node);
+    if (it != registry.nodes.end()) {
+      env->DeleteWeakGlobalRef(it->second);
+      registry.nodes.erase(it);
+    }
+    if (reference != nullptr) {
+      registry.nodes.emplace(node, reference);
+    }
+  }
+  YGNodeSetDirtiedFunc(node, reference != nullptr ? YGJNIDirtiedFunc : nullptr);
 }
 
 static inline YGConfigRef _jlong2YGConfigRef(jlong addr) {
@@ -182,18 +262,20 @@ static void jni_YGConfigSetLoggerJNI(
 }
 
 static void
-jni_YGNodeFinalizeJNI(JNIEnv* /*env*/, jobject /*obj*/, jlong nativePointer) {
+jni_YGNodeFinalizeJNI(JNIEnv* env, jobject /*obj*/, jlong nativePointer) {
   if (nativePointer == 0) {
     return;
   }
   const YGNodeRef node = _jlong2YGNodeRef(nativePointer);
+  clearDirtiedNode(env, node);
   YGNodeFinalize(node);
 }
 
 static void
-jni_YGNodeResetJNI(JNIEnv* /*env*/, jobject /*obj*/, jlong nativePointer) {
+jni_YGNodeResetJNI(JNIEnv* env, jobject /*obj*/, jlong nativePointer) {
   const YGNodeRef node = _jlong2YGNodeRef(nativePointer);
   void* context = YGNodeGetContext(node);
+  clearDirtiedNode(env, node);
   YGNodeReset(node);
   YGNodeSetContext(node, context);
 }
@@ -872,6 +954,9 @@ static JNINativeMethod methods[] = {
     {"jni_YGNodeNewWithConfigJNI", "(J)J", (void*)jni_YGNodeNewWithConfigJNI},
     {"jni_YGNodeFinalizeJNI", "(J)V", (void*)jni_YGNodeFinalizeJNI},
     {"jni_YGNodeResetJNI", "(J)V", (void*)jni_YGNodeResetJNI},
+    {"jni_YGNodeSetDirtiedFuncJNI",
+     "(JLcom/facebook/yoga/YogaNodeJNIBase;)V",
+     (void*)jni_YGNodeSetDirtiedFuncJNI},
     {"jni_YGNodeInsertChildJNI", "(JJI)V", (void*)jni_YGNodeInsertChildJNI},
     {"jni_YGNodeSwapChildJNI", "(JJI)V", (void*)jni_YGNodeSwapChildJNI},
     {"jni_YGNodeSetIsReferenceBaselineJNI",
